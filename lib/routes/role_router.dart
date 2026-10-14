@@ -7,7 +7,7 @@ import '../features/school_admin/screens/school_admin_shell.dart';
 import '../features/student/screens/student_shell.dart';
 import '../features/teacher/screens/teacher_shell.dart';
 import '../models/user_model.dart';
-import '../repositories/user_repository.dart';
+import '../repositories/firestore_user_repository.dart';
 import '../services/auth_service.dart';
 import '../services/user_bootstrap_service.dart';
 import 'app_routes.dart';
@@ -55,14 +55,17 @@ class _RoleRouterState extends State<RoleRouter> {
 
         final authUser = authSnapshot.data;
         if (authUser == null) {
+          debugPrint('[RoleRouter] No authenticated user. Rendering LoginScreen.');
           return const LoginScreen();
         }
+
+        debugPrint('[RoleRouter] Authenticated user detected. UID: ${authUser.uid}');
 
         // Authenticated user exists - resolve user profile via UserBootstrapService
         final bootstrapService = _bootstrapService ??
             UserBootstrapService(
               authService: _authService,
-              userRepository: _FallbackUserRepository(),
+              userRepository: FirestoreUserRepository(),
             );
 
         return FutureBuilder<UserBootstrapState>(
@@ -88,6 +91,12 @@ class _RoleRouterState extends State<RoleRouter> {
               );
             }
 
+            final UserModel? userModel = bootstrapState.userModel;
+
+            debugPrint(
+              '[RoleRouter] Bootstrap state: ${bootstrapState.status}, role: ${userModel?.role}',
+            );
+
             if (bootstrapState.status == UserBootstrapStatus.unauthenticated) {
               return const LoginScreen();
             }
@@ -98,7 +107,19 @@ class _RoleRouterState extends State<RoleRouter> {
                   type: StateMessageType.error,
                   title: 'Profile Not Found',
                   message:
-                      'No user profile found for this account. Please log in again or contact support.',
+                      'No user profile document found at users/${authUser.uid}. Please check Firestore configuration.',
+                  onRetry: () => _authService.signOut(),
+                ),
+              );
+            }
+
+            if (bootstrapState.status == UserBootstrapStatus.invalidProfile) {
+              return Scaffold(
+                body: StateMessage(
+                  type: StateMessageType.unauthorized,
+                  title: 'Invalid Role Profile',
+                  message:
+                      'Your user profile has an unassigned or invalid role. Please contact support.',
                   onRetry: () => _authService.signOut(),
                 ),
               );
@@ -110,15 +131,19 @@ class _RoleRouterState extends State<RoleRouter> {
                   type: StateMessageType.error,
                   title: 'Profile Load Error',
                   message:
-                      bootstrapState.errorMessage ?? 'An error occurred.',
+                      bootstrapState.errorMessage ?? 'An error occurred loading profile.',
                   onRetry: () => setState(() {}),
                 ),
               );
             }
 
             // Profile found - evaluate role
-            final role = bootstrapState.userModel?.role;
+            final role = userModel?.role;
             final destinationRoute = AppRoutes.getDashboardRouteForRole(role);
+
+            debugPrint(
+              '[RoleRouter] Mapped role "$role" to destination route: $destinationRoute',
+            );
 
             if (destinationRoute == null) {
               return Scaffold(
@@ -126,7 +151,7 @@ class _RoleRouterState extends State<RoleRouter> {
                   type: StateMessageType.unauthorized,
                   title: 'Invalid Role',
                   message:
-                      'Your user profile role ("$role") is invalid or unassigned. Please contact support.',
+                      'Your user profile role ("$role") is invalid or unrecognized. Please contact support.',
                   onRetry: () => _authService.signOut(),
                 ),
               );
@@ -149,12 +174,4 @@ class _RoleRouterState extends State<RoleRouter> {
       },
     );
   }
-}
-
-class _FallbackUserRepository implements UserRepository {
-  @override
-  Future<UserModel?> getUserById(String uid) async => null;
-
-  @override
-  Future<void> saveUser(UserModel user) async {}
 }
