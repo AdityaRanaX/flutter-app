@@ -38,7 +38,10 @@ void main() {
       Navigator.pushNamed(context, AppRoutes.districtDashboard);
       await tester.pumpAndSettle();
 
-      expect(find.text('District Home'), findsOneWidget);
+      // Home is the real dashboard now, so this asserts the District
+      // tab set rather than a placeholder's title.
+      expect(find.text('Schools'), findsWidgets);
+      expect(find.text('Exams'), findsOneWidget);
     });
 
     testWidgets('Navigates to School Admin Dashboard route', (

@@ -3,7 +3,14 @@ import 'package:flutter/material.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
+import '../features/district/controllers/school_details_controller.dart';
 import '../features/district/screens/district_shell.dart';
+import '../features/district/screens/school_details_screen.dart';
+import '../repositories/firestore_attendance_repository.dart';
+import '../repositories/firestore_exam_repository.dart';
+import '../repositories/firestore_fee_repository.dart';
+import '../repositories/firestore_school_repository.dart';
+import '../repositories/firestore_student_repository.dart';
 import '../features/school_admin/screens/school_admin_shell.dart';
 import '../features/student/screens/student_shell.dart';
 import '../features/teacher/screens/teacher_shell.dart';
@@ -13,6 +20,11 @@ abstract class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
   static const String districtDashboard = '/district-dashboard';
+
+  /// Takes the selected school's id as its route argument. The id is
+  /// passed rather than the school itself so the details screen reloads
+  /// the record instead of trusting data the list happened to be holding.
+  static const String schoolDetails = '/school-details';
   static const String schoolAdminDashboard = '/school-admin-dashboard';
   static const String teacherDashboard = '/teacher-dashboard';
   static const String studentDashboard = '/student-dashboard';
@@ -52,6 +64,35 @@ abstract class AppRoutes {
   };
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    // School Details is handled before the table because it is the one
+    // route that takes an argument, and because its controller needs the
+    // Firestore repositories wiring up.
+    if (settings.name == schoolDetails) {
+      final schoolId = settings.arguments;
+      if (schoolId is! String || schoolId.isEmpty) {
+        return MaterialPageRoute(
+          builder: (context) => const _PlaceholderScreen(
+            title: 'School Not Specified',
+            subtitle: 'No school was selected, so there is nothing to show.',
+          ),
+          settings: settings,
+        );
+      }
+      return MaterialPageRoute(
+        builder: (context) => SchoolDetailsScreen(
+          schoolId: schoolId,
+          controller: SchoolDetailsController(
+            schoolRepository: FirestoreSchoolRepository(),
+            studentRepository: FirestoreStudentRepository(),
+            attendanceRepository: FirestoreAttendanceRepository(),
+            feeRepository: FirestoreFeeRepository(),
+            examRepository: FirestoreExamRepository(),
+          ),
+        ),
+        settings: settings,
+      );
+    }
+
     final builder = routes[settings.name];
     if (builder != null) {
       return MaterialPageRoute(builder: builder, settings: settings);
