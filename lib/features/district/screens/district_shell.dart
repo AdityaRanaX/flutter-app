@@ -1,25 +1,76 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/app_screen_bar.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/placeholder_destination.dart';
-import '../../../services/firestore_service.dart';
+import '../../../repositories/firestore_attendance_repository.dart';
+import '../../../repositories/firestore_exam_repository.dart';
+import '../../../repositories/firestore_fee_repository.dart';
+import '../../../repositories/firestore_school_repository.dart';
+import '../../../repositories/firestore_student_repository.dart';
+import '../../../repositories/firestore_user_repository.dart';
+import '../../../routes/app_routes.dart';
+import '../controllers/district_dashboard_controller.dart';
+import '../controllers/district_data_loader.dart';
+import '../controllers/school_list_controller.dart';
+import 'district_dashboard_screen.dart';
+import 'school_list_screen.dart';
 
 /// The District Administrator navigation container.
 ///
-/// Supplies the District tab set to the shared [AppShell] and
-/// handles testing Firestore actions for authenticated District Admins.
+/// It supplies the District tab set to the shared [AppShell], owns the
+/// controllers behind the Home and Schools tabs, and remembers which tab
+/// is open. The shell itself knows nothing about roles; this file is what
+/// makes it a District experience.
+///
+/// This is the composition root for the District feature: the Firestore
+/// repositories are wired up here, so no screen or controller below
+/// reaches for `FirebaseFirestore.instance` itself.
 class DistrictShell extends StatefulWidget {
-  const DistrictShell({super.key});
+  /// Supplied by tests with fake repositories. Left null in the app, where
+  /// the real Firestore-backed loader is built instead.
+  final DistrictDataLoader? loader;
+
+  /// Shown in the dashboard greeting.
+  final String? administratorName;
+
+  const DistrictShell({super.key, this.loader, this.administratorName});
 
   @override
   State<DistrictShell> createState() => _DistrictShellState();
 }
 
 class _DistrictShellState extends State<DistrictShell> {
+  /// Which tab is open. Starts on the first one.
   int _currentIndex = 0;
-  bool _isTestingFirestore = false;
+
+  late final DistrictDataLoader _loader;
+  late final DistrictDashboardController _dashboardController;
+  late final SchoolListController _schoolListController;
+
+  @override
+  void initState() {
+    super.initState();
+    _loader = widget.loader ?? _firestoreLoader();
+    _dashboardController = DistrictDashboardController(loader: _loader);
+    _schoolListController = SchoolListController(loader: _loader);
+  }
+
+  @override
+  void dispose() {
+    _dashboardController.dispose();
+    _schoolListController.dispose();
+    super.dispose();
+  }
+
+  static DistrictDataLoader _firestoreLoader() => DistrictDataLoader(
+    schoolRepository: FirestoreSchoolRepository(),
+    studentRepository: FirestoreStudentRepository(),
+    userRepository: FirestoreUserRepository(),
+    attendanceRepository: FirestoreAttendanceRepository(),
+    feeRepository: FirestoreFeeRepository(),
+    examRepository: FirestoreExamRepository(),
+  );
 
   static const List<AppNavItem> _tabs = [
     AppNavItem(
@@ -44,45 +95,37 @@ class _DistrictShellState extends State<DistrictShell> {
     ),
   ];
 
-  static const List<Widget> _destinations = [
-    PlaceholderDestination(title: 'District Home', icon: Icons.home_outlined),
-    PlaceholderDestination(title: 'Schools', icon: Icons.apartment_outlined),
-    PlaceholderDestination(title: 'Exams', icon: Icons.assignment_outlined),
-    PlaceholderDestination(title: 'Profile', icon: Icons.person_outline),
-  ];
+  void _openSchools() => setState(() => _currentIndex = 1);
 
-  Future<void> _handleTestFirestore() async {
-    if (_isTestingFirestore) return;
+  void _openSchoolDetails(String schoolId) {
+    Navigator.of(context)
+        .pushNamed(AppRoutes.schoolDetails, arguments: schoolId);
+  }
 
-    setState(() {
-      _isTestingFirestore = true;
-    });
-
-    try {
-      await FirestoreService().addDemoSchool();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Firestore write success: Demo School added!'),
-            backgroundColor: AppColors.secondary,
-          ),
+  Widget _destination(int index) {
+    switch (index) {
+      case 0:
+        return DistrictDashboardScreen(
+          controller: _dashboardController,
+          administratorName: widget.administratorName,
+          onViewSchools: _openSchools,
         );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Firestore write failed: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
+      case 1:
+        return SchoolListScreen(
+          controller: _schoolListController,
+          onSchoolSelected: _openSchoolDetails,
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isTestingFirestore = false;
-        });
-      }
+      case 2:
+        // District Exam Overview is Day 7's work.
+        return const PlaceholderDestination(
+          title: 'Exams',
+          icon: Icons.assignment_outlined,
+        );
+      default:
+        return const PlaceholderDestination(
+          title: 'Profile',
+          icon: Icons.person_outline,
+        );
     }
   }
 
@@ -92,23 +135,8 @@ class _DistrictShellState extends State<DistrictShell> {
       items: _tabs,
       currentIndex: _currentIndex,
       onItemSelected: (index) => setState(() => _currentIndex = index),
-      appBar: AppScreenBar.large(
-        title: _tabs[_currentIndex].label,
-        actions: [
-          IconButton(
-            icon: _isTestingFirestore
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.cloud_upload_outlined),
-            tooltip: 'Test Firestore',
-            onPressed: _isTestingFirestore ? null : _handleTestFirestore,
-          ),
-        ],
-      ),
-      body: _destinations[_currentIndex],
+      appBar: AppScreenBar.large(title: _tabs[_currentIndex].label),
+      body: _destination(_currentIndex),
     );
   }
 }
