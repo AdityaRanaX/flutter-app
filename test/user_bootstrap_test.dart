@@ -22,6 +22,19 @@ class FakeUserRepository implements UserRepository {
     }
     _storage[user.uid] = user;
   }
+
+  @override
+  Future<List<UserModel>> getUsersBySchoolAndRole({
+    required String schoolId,
+    required String role,
+  }) async {
+    if (shouldThrow) {
+      throw Exception('Firestore database read failure');
+    }
+    return _storage.values
+        .where((u) => u.schoolId == schoolId && u.role == role)
+        .toList();
+  }
 }
 
 void main() {
