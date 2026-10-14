@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/app_screen_bar.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/placeholder_destination.dart';
+import '../../../services/firestore_service.dart';
 
 /// The District Administrator navigation container.
 ///
-/// It supplies the District tab set to the shared [AppShell] and
-/// remembers which tab is selected. Every tab currently shows a
-/// placeholder, because the real District screens are built later.
-///
-/// The shell itself knows nothing about roles; this file is what makes
-/// it a District experience.
+/// Supplies the District tab set to the shared [AppShell] and
+/// handles testing Firestore actions for authenticated District Admins.
 class DistrictShell extends StatefulWidget {
   const DistrictShell({super.key});
 
@@ -20,8 +18,8 @@ class DistrictShell extends StatefulWidget {
 }
 
 class _DistrictShellState extends State<DistrictShell> {
-  /// Which tab is open. Starts on the first one.
   int _currentIndex = 0;
+  bool _isTestingFirestore = false;
 
   static const List<AppNavItem> _tabs = [
     AppNavItem(
@@ -53,13 +51,63 @@ class _DistrictShellState extends State<DistrictShell> {
     PlaceholderDestination(title: 'Profile', icon: Icons.person_outline),
   ];
 
+  Future<void> _handleTestFirestore() async {
+    if (_isTestingFirestore) return;
+
+    setState(() {
+      _isTestingFirestore = true;
+    });
+
+    try {
+      await FirestoreService().addDemoSchool();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Firestore write success: Demo School added!'),
+            backgroundColor: AppColors.secondary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Firestore write failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTestingFirestore = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppShell(
       items: _tabs,
       currentIndex: _currentIndex,
       onItemSelected: (index) => setState(() => _currentIndex = index),
-      appBar: AppScreenBar.large(title: _tabs[_currentIndex].label),
+      appBar: AppScreenBar.large(
+        title: _tabs[_currentIndex].label,
+        actions: [
+          IconButton(
+            icon: _isTestingFirestore
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.cloud_upload_outlined),
+            tooltip: 'Test Firestore',
+            onPressed: _isTestingFirestore ? null : _handleTestFirestore,
+          ),
+        ],
+      ),
       body: _destinations[_currentIndex],
     );
   }

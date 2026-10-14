@@ -2,112 +2,227 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // =========================================================================
+    // AUTHORIZATION HELPER FUNCTIONS
+    // =========================================================================
+
+    /// Verifies that the incoming request is authenticated with Firebase Auth
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /// Verifies that the authenticated user has an existing Firestore profile document
+    function hasUserProfile() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    /// Returns the authenticated user's profile document map from Firestore
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
+    /// Returns the authenticated user's assigned role string, or null if profile does not exist
     function getUserRole() {
-      return getUserData().role;
+      return hasUserProfile() ? getUserData().role : null;
     }
 
+    /// Returns the authenticated user's assigned schoolId, or null if profile does not exist
     function getUserSchoolId() {
-      return getUserData().schoolId;
+      return hasUserProfile() ? getUserData().schoolId : null;
     }
 
+    /// Verifies if the authenticated user is a District Administrator
     function isDistrictAdmin() {
       return isSignedIn() && (getUserRole() == 'districtAdmin' || getUserRole() == 'district_admin');
     }
 
+    /// Verifies if the authenticated user is a School Administrator for the specified school
     function isSchoolAdmin(schoolId) {
       return isSignedIn() &&
         (getUserRole() == 'schoolAdmin' || getUserRole() == 'school_admin') &&
-        getUserSchoolId() == schoolId;
+        getUserSchoolId() == schoolId &&
+        schoolId != null &&
+        schoolId != '';
     }
 
+    /// Verifies if the authenticated user is a Teacher assigned to the specified school
     function isTeacher(schoolId) {
       return isSignedIn() &&
         (getUserRole() == 'teacher') &&
-        getUserSchoolId() == schoolId;
+        getUserSchoolId() == schoolId &&
+        schoolId != null &&
+        schoolId != '';
     }
 
+    /// Verifies if the authenticated user is a Student
     function isStudent() {
       return isSignedIn() && (getUserRole() == 'student');
     }
 
-    // Collection match rules
+    // =========================================================================
+    // COLLECTION ACCESS RULES
+    // =========================================================================
 
-    // Users Collection
+    // 1. Users Collection (/users/{userId})
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isDistrictAdmin() || getUserSchoolId() == resource.data.schoolId);
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || isDistrictAdmin() || isSchoolAdmin(request.resource.data.schoolId));
+      // Direct self-read evaluates FIRST to avoid recursive helper calls.
+      // Other profile reads restricted to District Admin, School Admin, or Teacher of that school.
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId ||
+        isDistrictAdmin() ||
+        isSchoolAdmin(resource.data.schoolId) ||
+        isTeacher(resource.data.schoolId)
+      );
+
+      // Create rules:
+      // - Self-registration allowed ONLY as 'student' and WITHOUT choosing an arbitrary schoolId
+      // - School Admins can create ONLY 'teacher' or 'student' profiles for their own school
+      // - District Admins can create any user profile
+      allow create: if isSignedIn() && (
+        (request.auth.uid == userId &&
+          request.resource.data.role == 'student' &&
+          (!('schoolId' in request.resource.data) || request.resource.data.schoolId == null || request.resource.data.schoolId == '')) ||
+        (isSchoolAdmin(request.resource.data.schoolId) &&
+          (request.resource.data.role == 'teacher' || request.resource.data.role == 'student')) ||
+        isDistrictAdmin()
+      );
+
+      // Update rules:
+      // - Self-updates cannot change UID, role, or schoolId
+      // - School Admins can update profiles in their school, but only between non-admin roles ('teacher' or 'student')
+      // - District Admins can update any profile
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId &&
+          request.resource.data.uid == resource.data.uid &&
+          request.resource.data.role == resource.data.role &&
+          ((!('schoolId' in resource.data) && !('schoolId' in request.resource.data)) ||
+           (resource.data.schoolId == request.resource.data.schoolId))) ||
+        (hasUserProfile() &&
+          isSchoolAdmin(resource.data.schoolId) &&
+          request.resource.data.schoolId == resource.data.schoolId &&
+          (request.resource.data.role == 'teacher' || request.resource.data.role == 'student') &&
+          (resource.data.role == 'teacher' || resource.data.role == 'student')) ||
+        isDistrictAdmin()
+      );
+
+      // Deletion restricted exclusively to District Administrators
       allow delete: if isDistrictAdmin();
     }
 
-    // Schools Collection
+    // 2. Schools Collection (/schools/{schoolId})
     match /schools/{schoolId} {
-      allow read: if isSignedIn() && (isDistrictAdmin() || getUserSchoolId() == schoolId);
-      allow write: if isSignedIn() && (isDistrictAdmin() || isSchoolAdmin(schoolId));
+      allow read: if isSignedIn() && (
+        isDistrictAdmin() ||
+        getUserSchoolId() == schoolId
+      );
+
+      allow create: if isDistrictAdmin();
+
+      allow update: if isSignedIn() && (
+        isDistrictAdmin() ||
+        isSchoolAdmin(schoolId)
+      );
+
+      allow delete: if isDistrictAdmin();
     }
 
-    // Students Collection
+    // 3. Students Collection (/students/{studentId})
     match /students/{studentId} {
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
         getUserSchoolId() == resource.data.schoolId ||
-        resource.data.studentId == request.auth.uid ||
-        studentId == request.auth.uid
+        (isStudent() && (resource.data.studentId == request.auth.uid || studentId == request.auth.uid))
       );
-      allow write: if isSignedIn() && (
+
+      allow create: if isSignedIn() && (
         isDistrictAdmin() ||
         isSchoolAdmin(request.resource.data.schoolId)
       );
+
+      allow update: if isSignedIn() && (
+        isDistrictAdmin() ||
+        (isSchoolAdmin(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId)
+      );
+
+      allow delete: if isSignedIn() && (
+        isDistrictAdmin() ||
+        isSchoolAdmin(resource.data.schoolId)
+      );
     }
 
-    // Attendance Collection
+    // 4. Attendance Collection (/attendance/{attendanceId})
     match /attendance/{attendanceId} {
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
         getUserSchoolId() == resource.data.schoolId ||
-        resource.data.studentId == request.auth.uid
+        (isStudent() && resource.data.studentId == request.auth.uid)
       );
-      allow create, update: if isSignedIn() && (
+
+      allow create: if isSignedIn() && (
         isDistrictAdmin() ||
         isSchoolAdmin(request.resource.data.schoolId) ||
         isTeacher(request.resource.data.schoolId)
       );
-      allow delete: if isDistrictAdmin() || isSchoolAdmin(resource.data.schoolId);
+
+      allow update: if isSignedIn() && (
+        isDistrictAdmin() ||
+        (isSchoolAdmin(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId) ||
+        (isTeacher(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId)
+      );
+
+      allow delete: if isSignedIn() && (
+        isDistrictAdmin() ||
+        isSchoolAdmin(resource.data.schoolId)
+      );
     }
 
-    // Fees Collection
+    // 5. Fees Collection (/fees/{feeId})
     match /fees/{feeId} {
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
         getUserSchoolId() == resource.data.schoolId ||
-        resource.data.studentId == request.auth.uid
+        (isStudent() && resource.data.studentId == request.auth.uid)
       );
-      allow write: if isSignedIn() && (
+
+      allow create: if isSignedIn() && (
         isDistrictAdmin() ||
         isSchoolAdmin(request.resource.data.schoolId)
       );
+
+      allow update: if isSignedIn() && (
+        isDistrictAdmin() ||
+        (isSchoolAdmin(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId)
+      );
+
+      allow delete: if isSignedIn() && (
+        isDistrictAdmin() ||
+        isSchoolAdmin(resource.data.schoolId)
+      );
     }
 
-    // Exams Collection
+    // 6. Exams Collection (/exams/{examId})
     match /exams/{examId} {
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
         getUserSchoolId() == resource.data.schoolId
       );
-      allow create, update: if isSignedIn() && (
+
+      allow create: if isSignedIn() && (
         isDistrictAdmin() ||
         isSchoolAdmin(request.resource.data.schoolId) ||
         isTeacher(request.resource.data.schoolId)
       );
-      allow delete: if isDistrictAdmin() || isSchoolAdmin(resource.data.schoolId);
+
+      allow update: if isSignedIn() && (
+        isDistrictAdmin() ||
+        (isSchoolAdmin(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId) ||
+        (isTeacher(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId)
+      );
+
+      allow delete: if isSignedIn() && (
+        isDistrictAdmin() ||
+        isSchoolAdmin(resource.data.schoolId)
+      );
     }
   }
 }

@@ -4,13 +4,21 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../repositories/firestore_user_repository.dart';
+import '../../../repositories/user_repository.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/user_bootstrap_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final AuthService? authService;
+  final UserRepository? userRepository;
 
-  const LoginScreen({super.key, this.authService});
+  const LoginScreen({
+    super.key,
+    this.authService,
+    this.userRepository,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -22,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   late final AuthService _authService;
+  late final UserRepository _userRepository;
   bool _isLoading = false;
   bool _rememberMe = false;
   String? _errorMessage;
@@ -30,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _authService = widget.authService ?? AuthService();
+    _userRepository = widget.userRepository ?? FirestoreUserRepository();
   }
 
   @override
@@ -47,23 +57,90 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
+    final email = _emailController.text.trim();
+    debugPrint('[LoginScreen] Starting login flow for email: $email');
+
     try {
-      await _authService.signInWithEmailAndPassword(
-        email: _emailController.text,
+      final credential = await _authService.signInWithEmailAndPassword(
+        email: email,
         password: _passwordController.text,
       );
-      if (mounted) {
+
+      final user = credential.user ?? _authService.currentUser;
+      if (user == null) {
+        throw const AuthException('Authentication succeeded but user session is null.');
+      }
+
+      debugPrint('[LoginScreen] Auth successful. User UID: ${user.uid}');
+
+      // Validate user profile and role in Firestore
+      final bootstrapService = UserBootstrapService(
+        authService: _authService,
+        userRepository: _userRepository,
+      );
+
+      final bootstrapState = await bootstrapService.bootstrapUser(user);
+      debugPrint('[LoginScreen] Profile lookup status: ${bootstrapState.status}');
+
+      if (!mounted) return;
+
+      if (bootstrapState.status == UserBootstrapStatus.profileNotFound) {
+        setState(() {
+          _errorMessage =
+              'No user profile document found at users/${user.uid}. Please check Firestore configuration.';
+        });
+        return;
+      }
+
+      if (bootstrapState.status == UserBootstrapStatus.invalidProfile) {
+        setState(() {
+          _errorMessage =
+              'User profile has an invalid or unassigned role. Please contact support.';
+        });
+        return;
+      }
+
+      if (bootstrapState.status == UserBootstrapStatus.error) {
+        setState(() {
+          _errorMessage =
+              bootstrapState.errorMessage ?? 'Failed to load user profile.';
+        });
+        return;
+      }
+
+      if (bootstrapState.status == UserBootstrapStatus.profileFound) {
+        final role = bootstrapState.userModel?.role;
+        final route = AppRoutes.getDashboardRouteForRole(role);
+
+        debugPrint('[LoginScreen] Role "$role" mapped to route: $route');
+
+        if (route == null) {
+          setState(() {
+            _errorMessage =
+                'Your user profile role ("$role") is unauthorized or unrecognized.';
+          });
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
+          SnackBar(
+            content: Text('Login successful! Welcome, ${bootstrapState.userModel?.name ?? 'User'}'),
+            backgroundColor: AppColors.secondary,
+          ),
         );
+
+        // Perform navigation to the role dashboard
+        Navigator.pushReplacementNamed(context, route);
       }
     } on AuthException catch (e) {
+      debugPrint('[LoginScreen] Auth error: ${e.message}');
       setState(() {
         _errorMessage = e.message;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[LoginScreen] Unexpected login error: $e');
       setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _errorMessage = 'An unexpected error occurred during login. Please try again.';
       });
     } finally {
       if (mounted) {
