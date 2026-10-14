@@ -7,13 +7,11 @@ import 'package:my_flutter_edulens/features/auth/screens/reset_password_screen.d
 
 void main() {
   group('Authentication UI Tests', () {
-    testWidgets('LoginScreen renders branding, email, password, and buttons',
-        (WidgetTester tester) async {
+    testWidgets('LoginScreen renders branding, email, password, and buttons', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const LoginScreen(),
-        ),
+        MaterialApp(theme: AppTheme.lightTheme, home: const LoginScreen()),
       );
 
       expect(find.text('EduLens'), findsOneWidget);
@@ -25,23 +23,26 @@ void main() {
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
-    testWidgets('ForgotPasswordScreen renders title, email field and send button',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const ForgotPasswordScreen(),
-        ),
-      );
+    testWidgets(
+      'ForgotPasswordScreen renders title, email field and send button',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const ForgotPasswordScreen(),
+          ),
+        );
 
-      expect(find.text('Reset Your Password'), findsOneWidget);
-      expect(find.text('Email Address'), findsOneWidget);
-      expect(find.text('Send Reset Link'), findsOneWidget);
-      expect(find.text('Back to Login'), findsOneWidget);
-    });
+        expect(find.text('Reset Your Password'), findsOneWidget);
+        expect(find.text('Email Address'), findsOneWidget);
+        expect(find.text('Send Reset Link'), findsOneWidget);
+        expect(find.text('Back to Login'), findsOneWidget);
+      },
+    );
 
-    testWidgets('ResetPasswordScreen renders new and confirm password fields',
-        (WidgetTester tester) async {
+    testWidgets('ResetPasswordScreen renders new and confirm password fields', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,

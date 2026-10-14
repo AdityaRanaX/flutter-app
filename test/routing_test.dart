@@ -5,7 +5,9 @@ import 'package:my_flutter_edulens/routes/app_routes.dart';
 
 void main() {
   group('EduLens Routing Tests', () {
-    testWidgets('Initial route renders LoginScreen', (WidgetTester tester) async {
+    testWidgets('Initial route renders LoginScreen', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EduLensApp());
       await tester.pumpAndSettle();
 
@@ -13,7 +15,9 @@ void main() {
       expect(find.text('Sign In'), findsOneWidget);
     });
 
-    testWidgets('Navigates to Forgot Password route', (WidgetTester tester) async {
+    testWidgets('Navigates to Forgot Password route', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EduLensApp());
       await tester.pumpAndSettle();
 
@@ -24,7 +28,9 @@ void main() {
       expect(find.text('Reset Your Password'), findsOneWidget);
     });
 
-    testWidgets('Navigates to District Dashboard route', (WidgetTester tester) async {
+    testWidgets('Navigates to District Dashboard route', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EduLensApp());
       await tester.pumpAndSettle();
 
@@ -35,7 +41,9 @@ void main() {
       expect(find.text('District Home'), findsOneWidget);
     });
 
-    testWidgets('Navigates to School Admin Dashboard route', (WidgetTester tester) async {
+    testWidgets('Navigates to School Admin Dashboard route', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EduLensApp());
       await tester.pumpAndSettle();
 
@@ -46,7 +54,9 @@ void main() {
       expect(find.text('Students'), findsWidgets);
     });
 
-    testWidgets('Navigates to Teacher Dashboard route', (WidgetTester tester) async {
+    testWidgets('Navigates to Teacher Dashboard route', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EduLensApp());
       await tester.pumpAndSettle();
 
@@ -57,7 +67,9 @@ void main() {
       expect(find.text('Teacher Home'), findsOneWidget);
     });
 
-    testWidgets('Navigates to Student Dashboard route', (WidgetTester tester) async {
+    testWidgets('Navigates to Student Dashboard route', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EduLensApp());
       await tester.pumpAndSettle();
 

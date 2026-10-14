@@ -11,7 +11,7 @@ class FirestoreFeeRepository implements FeeRepository {
   final FirebaseFirestore? _customFirestore;
 
   FirestoreFeeRepository({FirebaseFirestore? firestore})
-      : _customFirestore = firestore;
+    : _customFirestore = firestore;
 
   FirebaseFirestore get _firestore =>
       _customFirestore ?? FirebaseFirestore.instance;

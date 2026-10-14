@@ -53,8 +53,9 @@ void main() {
 
   group('Role tab sets', () {
     // Each role gets the tab set the approved UX defines for it.
-    testWidgets('District shows Home / Schools / Exams / Profile',
-        (tester) async {
+    testWidgets('District shows Home / Schools / Exams / Profile', (
+      tester,
+    ) async {
       await tester.pumpWidget(wrapShell(const DistrictShell()));
 
       expect(find.text('Schools'), findsWidgets);
@@ -63,8 +64,9 @@ void main() {
       expect(find.text('Attendance'), findsNothing);
     });
 
-    testWidgets('School Admin shows Students / School / Profile',
-        (tester) async {
+    testWidgets('School Admin shows Students / School / Profile', (
+      tester,
+    ) async {
       await tester.pumpWidget(wrapShell(const SchoolAdminShell()));
 
       expect(find.text('Students'), findsWidgets);
@@ -73,8 +75,9 @@ void main() {
       expect(find.text('Exams'), findsNothing);
     });
 
-    testWidgets('Teacher shows Home / Attendance / Exams / Profile',
-        (tester) async {
+    testWidgets('Teacher shows Home / Attendance / Exams / Profile', (
+      tester,
+    ) async {
       await tester.pumpWidget(wrapShell(const TeacherShell()));
 
       expect(find.text('Attendance'), findsOneWidget);
@@ -94,8 +97,9 @@ void main() {
   });
 
   group('Switching tabs', () {
-    testWidgets('tapping a tab swaps the placeholder behind it',
-        (tester) async {
+    testWidgets('tapping a tab swaps the placeholder behind it', (
+      tester,
+    ) async {
       await tester.pumpWidget(wrapShell(const DistrictShell()));
 
       // Starts on Home.

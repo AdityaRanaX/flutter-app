@@ -19,7 +19,7 @@ class AuthService {
   final FirebaseAuth? _customFirebaseAuth;
 
   AuthService({FirebaseAuth? firebaseAuth})
-      : _customFirebaseAuth = firebaseAuth;
+    : _customFirebaseAuth = firebaseAuth;
 
   FirebaseAuth get _firebaseAuth =>
       _customFirebaseAuth ?? FirebaseAuth.instance;

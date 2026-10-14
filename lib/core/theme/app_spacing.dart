@@ -64,14 +64,17 @@ abstract class AppRadius {
   // --- Ready-made BorderRadius values ---
 
   static const BorderRadius borderSm = BorderRadius.all(Radius.circular(sm));
-  static const BorderRadius borderButton =
-      BorderRadius.all(Radius.circular(button));
-  static const BorderRadius borderInput =
-      BorderRadius.all(Radius.circular(input));
+  static const BorderRadius borderButton = BorderRadius.all(
+    Radius.circular(button),
+  );
+  static const BorderRadius borderInput = BorderRadius.all(
+    Radius.circular(input),
+  );
   static const BorderRadius borderMd = BorderRadius.all(Radius.circular(md));
   static const BorderRadius borderLg = BorderRadius.all(Radius.circular(lg));
-  static const BorderRadius borderPill =
-      BorderRadius.all(Radius.circular(pill));
+  static const BorderRadius borderPill = BorderRadius.all(
+    Radius.circular(pill),
+  );
 
   /// Old name kept so existing widgets keep compiling.
   static const double circular = pill;

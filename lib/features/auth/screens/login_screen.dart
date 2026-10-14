@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/app_button.dart';
@@ -14,11 +15,7 @@ class LoginScreen extends StatefulWidget {
   final AuthService? authService;
   final UserRepository? userRepository;
 
-  const LoginScreen({
-    super.key,
-    this.authService,
-    this.userRepository,
-  });
+  const LoginScreen({super.key, this.authService, this.userRepository});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -68,7 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final user = credential.user ?? _authService.currentUser;
       if (user == null) {
-        throw const AuthException('Authentication succeeded but user session is null.');
+        throw const AuthException(
+          'Authentication succeeded but user session is null.',
+        );
       }
 
       debugPrint('[LoginScreen] Auth successful. User UID: ${user.uid}');
@@ -80,7 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final bootstrapState = await bootstrapService.bootstrapUser(user);
-      debugPrint('[LoginScreen] Profile lookup status: ${bootstrapState.status}');
+      debugPrint(
+        '[LoginScreen] Profile lookup status: ${bootstrapState.status}',
+      );
 
       if (!mounted) return;
 
@@ -94,8 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (bootstrapState.status == UserBootstrapStatus.invalidProfile) {
         setState(() {
-          _errorMessage =
-              'User profile has an invalid or unassigned role. Please contact support.';
+          _errorMessage = 'User profile has an invalid or unassigned role. Please contact support.';
         });
         return;
       }
@@ -124,7 +124,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login successful! Welcome, ${bootstrapState.userModel?.name ?? 'User'}'),
+            content: Text(
+              'Login successful! Welcome, ${bootstrapState.userModel?.name ?? 'User'}',
+            ),
             backgroundColor: AppColors.secondary,
           ),
         );
@@ -140,7 +142,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       debugPrint('[LoginScreen] Unexpected login error: $e');
       setState(() {
-        _errorMessage = 'An unexpected error occurred during login. Please try again.';
+        _errorMessage =
+            'An unexpected error occurred during login. Please try again.';
       });
     } finally {
       if (mounted) {
@@ -263,7 +266,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, AppRoutes.forgotPassword);
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.forgotPassword,
+                            );
                           },
                           child: const Text('Forgot Password?'),
                         ),
@@ -287,7 +293,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
                             'OR',
-                            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                         Expanded(child: Divider()),

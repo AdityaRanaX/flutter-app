@@ -72,11 +72,7 @@ class AppListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final row = Row(
       children: [
-        AppIconTile(
-          icon: icon,
-          color: iconColor,
-          background: iconBackground,
-        ),
+        AppIconTile(icon: icon, color: iconColor, background: iconBackground),
         const SizedBox(width: AppSpacing.ms),
         // Expanded lets the text take the leftover width and wrap or
         // ellipsis instead of overflowing the row.

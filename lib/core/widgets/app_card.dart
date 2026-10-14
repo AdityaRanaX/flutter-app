@@ -25,12 +25,7 @@ class AppCard extends StatelessWidget {
   /// If given, the whole card becomes tappable with a ripple.
   final VoidCallback? onTap;
 
-  const AppCard({
-    super.key,
-    required this.child,
-    this.padding,
-    this.onTap,
-  });
+  const AppCard({super.key, required this.child, this.padding, this.onTap});
 
   @override
   Widget build(BuildContext context) {

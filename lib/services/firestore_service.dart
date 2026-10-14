@@ -5,7 +5,7 @@ class FirestoreService {
   final FirebaseFirestore _db;
 
   FirestoreService({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   /// Writes a demo document to the 'schools' collection in Cloud Firestore.
   Future<void> addDemoSchool() async {

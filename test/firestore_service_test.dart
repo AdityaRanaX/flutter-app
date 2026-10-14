@@ -5,12 +5,11 @@ import 'package:my_flutter_edulens/features/district/screens/district_shell.dart
 
 void main() {
   group('Firestore Integration & Test Button Tests', () {
-    testWidgets('DistrictShell displays Test Firestore action icon', (WidgetTester tester) async {
+    testWidgets('DistrictShell displays Test Firestore action icon', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const DistrictShell(),
-        ),
+        MaterialApp(theme: AppTheme.lightTheme, home: const DistrictShell()),
       );
 
       expect(find.byIcon(Icons.cloud_upload_outlined), findsOneWidget);

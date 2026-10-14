@@ -16,7 +16,7 @@ class FirestoreSchoolRepository implements SchoolRepository {
   final FirebaseFirestore? _customFirestore;
 
   FirestoreSchoolRepository({FirebaseFirestore? firestore})
-      : _customFirestore = firestore;
+    : _customFirestore = firestore;
 
   FirebaseFirestore get _firestore =>
       _customFirestore ?? FirebaseFirestore.instance;

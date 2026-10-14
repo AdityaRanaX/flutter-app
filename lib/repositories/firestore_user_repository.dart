@@ -11,7 +11,7 @@ class FirestoreUserRepository implements UserRepository {
   final FirebaseFirestore? _customFirestore;
 
   FirestoreUserRepository({FirebaseFirestore? firestore})
-      : _customFirestore = firestore;
+    : _customFirestore = firestore;
 
   FirebaseFirestore get _firestore =>
       _customFirestore ?? FirebaseFirestore.instance;
@@ -35,10 +35,9 @@ class FirestoreUserRepository implements UserRepository {
   @override
   Future<void> saveUser(UserModel user) async {
     try {
-      await _collection.doc(user.uid).set(
-            user.toMap(),
-            SetOptions(merge: true),
-          );
+      await _collection
+          .doc(user.uid)
+          .set(user.toMap(), SetOptions(merge: true));
     } on FirebaseException catch (e) {
       throw RepositoryException.fromFirebase(e, 'save this profile');
     }

@@ -8,7 +8,9 @@ import 'package:my_flutter_edulens/core/widgets/state_message.dart';
 
 void main() {
   group('Shared Visual Shell Widgets Tests', () {
-    testWidgets('AppShell renders body and bottom navigation bar', (WidgetTester tester) async {
+    testWidgets('AppShell renders body and bottom navigation bar', (
+      WidgetTester tester,
+    ) async {
       int selectedIndex = 0;
 
       await tester.pumpWidget(
@@ -16,8 +18,16 @@ void main() {
           theme: AppTheme.lightTheme,
           home: AppShell(
             items: const [
-              AppNavItem(label: 'Home', icon: Icons.home_outlined, activeIcon: Icons.home),
-              AppNavItem(label: 'Profile', icon: Icons.person_outline, activeIcon: Icons.person),
+              AppNavItem(
+                label: 'Home',
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home,
+              ),
+              AppNavItem(
+                label: 'Profile',
+                icon: Icons.person_outline,
+                activeIcon: Icons.person,
+              ),
             ],
             currentIndex: selectedIndex,
             onItemSelected: (index) {
@@ -36,7 +46,9 @@ void main() {
       expect(selectedIndex, 1);
     });
 
-    testWidgets('AppScreenBar renders title and back button', (WidgetTester tester) async {
+    testWidgets('AppScreenBar renders title and back button', (
+      WidgetTester tester,
+    ) async {
       bool backTapped = false;
 
       await tester.pumpWidget(
@@ -61,7 +73,9 @@ void main() {
       expect(backTapped, isTrue);
     });
 
-    testWidgets('PlaceholderDestination renders title and icon', (WidgetTester tester) async {
+    testWidgets('PlaceholderDestination renders title and icon', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -77,15 +91,23 @@ void main() {
       expect(find.byIcon(Icons.fact_check_outlined), findsOneWidget);
     });
 
-    testWidgets('StateMessage renders loading, empty, and error states', (WidgetTester tester) async {
+    testWidgets('StateMessage renders loading, empty, and error states', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
             body: Column(
               children: [
                 StateMessage(type: StateMessageType.loading),
-                StateMessage(type: StateMessageType.empty, title: 'No Data Available'),
-                StateMessage(type: StateMessageType.error, title: 'Error Loading'),
+                StateMessage(
+                  type: StateMessageType.empty,
+                  title: 'No Data Available',
+                ),
+                StateMessage(
+                  type: StateMessageType.error,
+                  title: 'Error Loading',
+                ),
               ],
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
@@ -37,26 +38,23 @@ abstract class AppRoutes {
   }
 
   static Map<String, WidgetBuilder> get routes => {
-        login: (context) => const LoginScreen(),
-        forgotPassword: (context) => const ForgotPasswordScreen(),
-        resetPassword: (context) => const ResetPasswordScreen(),
-        districtDashboard: (context) => const DistrictShell(),
-        schoolAdminDashboard: (context) => const SchoolAdminShell(),
-        teacherDashboard: (context) => const TeacherShell(),
-        studentDashboard: (context) => const StudentShell(),
-        profile: (context) => const _PlaceholderScreen(
-              title: 'Profile & Settings',
-              subtitle: 'User Account Details',
-            ),
-      };
+    login: (context) => const LoginScreen(),
+    forgotPassword: (context) => const ForgotPasswordScreen(),
+    resetPassword: (context) => const ResetPasswordScreen(),
+    districtDashboard: (context) => const DistrictShell(),
+    schoolAdminDashboard: (context) => const SchoolAdminShell(),
+    teacherDashboard: (context) => const TeacherShell(),
+    studentDashboard: (context) => const StudentShell(),
+    profile: (context) => const _PlaceholderScreen(
+      title: 'Profile & Settings',
+      subtitle: 'User Account Details',
+    ),
+  };
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final builder = routes[settings.name];
     if (builder != null) {
-      return MaterialPageRoute(
-        builder: builder,
-        settings: settings,
-      );
+      return MaterialPageRoute(builder: builder, settings: settings);
     }
     return MaterialPageRoute(
       builder: (context) => const _PlaceholderScreen(
@@ -72,17 +70,12 @@ class _PlaceholderScreen extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _PlaceholderScreen({
-    required this.title,
-    required this.subtitle,
-  });
+  const _PlaceholderScreen({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

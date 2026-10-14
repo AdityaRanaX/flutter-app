@@ -4,10 +4,10 @@ import 'package:my_flutter_edulens/core/constants/firestore_collections.dart';
 import 'package:my_flutter_edulens/repositories/repository_exception.dart';
 
 FirebaseException _firebaseError(String code) => FirebaseException(
-      plugin: 'cloud_firestore',
-      code: code,
-      message: 'raw firebase detail that users should never see',
-    );
+  plugin: 'cloud_firestore',
+  code: code,
+  message: 'raw firebase detail that users should never see',
+);
 
 void main() {
   group('RepositoryException', () {

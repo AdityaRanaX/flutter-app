@@ -191,7 +191,9 @@ class StateMessage extends StatelessWidget {
           child: SizedBox(
             width: AppSizes.iconMd,
             height: AppSizes.iconMd,
-            child: CircularProgressIndicator(strokeWidth: AppSizes.spinnerStroke),
+            child: CircularProgressIndicator(
+              strokeWidth: AppSizes.spinnerStroke,
+            ),
           ),
         ),
       );
@@ -201,10 +203,7 @@ class StateMessage extends StatelessWidget {
       width: AppSizes.iconXl + AppSpacing.md,
       height: AppSizes.iconXl + AppSpacing.md,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: _iconBackground,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: _iconBackground, shape: BoxShape.circle),
       child: Icon(
         icon ?? _defaultIcon,
         size: AppSizes.iconXl / 2,

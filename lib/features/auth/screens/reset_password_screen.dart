@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/app_button.dart';
@@ -56,8 +57,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (mounted) {
       setState(() {
         _isLoading = false;
-        _successMessage =
-            'Password updated successfully! You can now log in with your new password.';
+        _successMessage = 'Password updated successfully! You can now log in with your new password.';
       });
     }
   }
@@ -66,9 +66,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Reset Password'),
-      ),
+      appBar: AppBar(title: const Text('Reset Password')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

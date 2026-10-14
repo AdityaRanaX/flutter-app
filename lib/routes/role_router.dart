@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../core/widgets/state_message.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/district/screens/district_shell.dart';
@@ -18,11 +19,7 @@ class RoleRouter extends StatefulWidget {
   final AuthService? authService;
   final UserBootstrapService? bootstrapService;
 
-  const RoleRouter({
-    super.key,
-    this.authService,
-    this.bootstrapService,
-  });
+  const RoleRouter({super.key, this.authService, this.bootstrapService});
 
   @override
   State<RoleRouter> createState() => _RoleRouterState();
@@ -55,14 +52,19 @@ class _RoleRouterState extends State<RoleRouter> {
 
         final authUser = authSnapshot.data;
         if (authUser == null) {
-          debugPrint('[RoleRouter] No authenticated user. Rendering LoginScreen.');
+          debugPrint(
+            '[RoleRouter] No authenticated user. Rendering LoginScreen.',
+          );
           return const LoginScreen();
         }
 
-        debugPrint('[RoleRouter] Authenticated user detected. UID: ${authUser.uid}');
+        debugPrint(
+          '[RoleRouter] Authenticated user detected. UID: ${authUser.uid}',
+        );
 
         // Authenticated user exists - resolve user profile via UserBootstrapService
-        final bootstrapService = _bootstrapService ??
+        final bootstrapService =
+            _bootstrapService ??
             UserBootstrapService(
               authService: _authService,
               userRepository: FirestoreUserRepository(),
@@ -118,8 +120,7 @@ class _RoleRouterState extends State<RoleRouter> {
                 body: StateMessage(
                   type: StateMessageType.unauthorized,
                   title: 'Invalid Role Profile',
-                  message:
-                      'Your user profile has an unassigned or invalid role. Please contact support.',
+                  message: 'Your user profile has an unassigned or invalid role. Please contact support.',
                   onRetry: () => _authService.signOut(),
                 ),
               );
@@ -131,7 +132,8 @@ class _RoleRouterState extends State<RoleRouter> {
                   type: StateMessageType.error,
                   title: 'Profile Load Error',
                   message:
-                      bootstrapState.errorMessage ?? 'An error occurred loading profile.',
+                      bootstrapState.errorMessage ??
+                      'An error occurred loading profile.',
                   onRetry: () => setState(() {}),
                 ),
               );

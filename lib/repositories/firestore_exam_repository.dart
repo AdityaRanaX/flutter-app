@@ -11,7 +11,7 @@ class FirestoreExamRepository implements ExamRepository {
   final FirebaseFirestore? _customFirestore;
 
   FirestoreExamRepository({FirebaseFirestore? firestore})
-      : _customFirestore = firestore;
+    : _customFirestore = firestore;
 
   FirebaseFirestore get _firestore =>
       _customFirestore ?? FirebaseFirestore.instance;

@@ -128,9 +128,7 @@ abstract class AppTheme {
             horizontal: AppSpacing.sm,
             vertical: AppSpacing.xs,
           ),
-          shape: const RoundedRectangleBorder(
-            borderRadius: AppRadius.borderSm,
-          ),
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.borderSm),
         ),
       ),
 

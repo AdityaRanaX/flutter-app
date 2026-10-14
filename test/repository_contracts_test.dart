@@ -71,10 +71,9 @@ class TestStudentRepository implements StudentRepository {
   Future<List<StudentModel>> getStudentsBySchoolAndClass({
     required String schoolId,
     required String className,
-  }) async =>
-      students
-          .where((s) => s.schoolId == schoolId && s.className == className)
-          .toList();
+  }) async => students
+      .where((s) => s.schoolId == schoolId && s.className == className)
+      .toList();
 }
 
 class TestAttendanceRepository implements AttendanceRepository {
@@ -94,8 +93,7 @@ class TestAttendanceRepository implements AttendanceRepository {
   @override
   Future<List<AttendanceModel>> getAttendanceByStudent(
     String studentId,
-  ) async =>
-      records.where((a) => a.studentId == studentId).toList();
+  ) async => records.where((a) => a.studentId == studentId).toList();
 
   @override
   Future<void> saveAttendance(AttendanceModel attendance) async {
@@ -255,44 +253,57 @@ void main() {
   });
 
   group('Read contracts added for the District screens', () {
-    test('teacher count comes from users filtered by school and role', () async {
-      final repo = TestUserRepository();
-      await repo.saveUser(const UserModel(
-        uid: 't1',
-        name: 'Priya',
-        email: 'priya@edulens.test',
-        role: 'teacher',
-        schoolId: 's1',
-      ));
-      await repo.saveUser(const UserModel(
-        uid: 't2',
-        name: 'Rahul',
-        email: 'rahul@edulens.test',
-        role: 'teacher',
-        schoolId: 's1',
-      ));
-      // A teacher at a different school, and a student at the same one:
-      // neither should be counted.
-      await repo.saveUser(const UserModel(
-        uid: 't3',
-        name: 'Arjun',
-        email: 'arjun@edulens.test',
-        role: 'teacher',
-        schoolId: 's2',
-      ));
-      await repo.saveUser(const UserModel(
-        uid: 's9',
-        name: 'Meera',
-        email: 'meera@edulens.test',
-        role: 'student',
-        schoolId: 's1',
-      ));
+    test(
+      'teacher count comes from users filtered by school and role',
+      () async {
+        final repo = TestUserRepository();
+        await repo.saveUser(
+          const UserModel(
+            uid: 't1',
+            name: 'Priya',
+            email: 'priya@edulens.test',
+            role: 'teacher',
+            schoolId: 's1',
+          ),
+        );
+        await repo.saveUser(
+          const UserModel(
+            uid: 't2',
+            name: 'Rahul',
+            email: 'rahul@edulens.test',
+            role: 'teacher',
+            schoolId: 's1',
+          ),
+        );
+        // A teacher at a different school, and a student at the same one:
+        // neither should be counted.
+        await repo.saveUser(
+          const UserModel(
+            uid: 't3',
+            name: 'Arjun',
+            email: 'arjun@edulens.test',
+            role: 'teacher',
+            schoolId: 's2',
+          ),
+        );
+        await repo.saveUser(
+          const UserModel(
+            uid: 's9',
+            name: 'Meera',
+            email: 'meera@edulens.test',
+            role: 'student',
+            schoolId: 's1',
+          ),
+        );
 
-      final teachers =
-          await repo.getUsersBySchoolAndRole(schoolId: 's1', role: 'teacher');
-      expect(teachers.length, 2);
-      expect(teachers.map((t) => t.uid), containsAll(['t1', 't2']));
-    });
+        final teachers = await repo.getUsersBySchoolAndRole(
+          schoolId: 's1',
+          role: 'teacher',
+        );
+        expect(teachers.length, 2);
+        expect(teachers.map((t) => t.uid), containsAll(['t1', 't2']));
+      },
+    );
 
     test('students narrow by school AND class, not school alone', () async {
       final repo = TestStudentRepository();
@@ -362,54 +373,62 @@ void main() {
       expect((await repo.getAttendanceBySchool('s2')), isEmpty);
     });
 
-    test('saving the same attendance id twice replaces, never duplicates',
-        () async {
-      final repo = TestAttendanceRepository();
-      const first = AttendanceModel(
-        attendanceId: 'a1',
-        studentId: 'st1',
-        schoolId: 's1',
-        teacherId: 't1',
-        date: '2026-03-30',
-        status: 'Absent',
-      );
-      await repo.saveAttendance(first);
-      await repo.saveAttendance(first.copyWith(status: 'Present'));
+    test(
+      'saving the same attendance id twice replaces, never duplicates',
+      () async {
+        final repo = TestAttendanceRepository();
+        const first = AttendanceModel(
+          attendanceId: 'a1',
+          studentId: 'st1',
+          schoolId: 's1',
+          teacherId: 't1',
+          date: '2026-03-30',
+          status: 'Absent',
+        );
+        await repo.saveAttendance(first);
+        await repo.saveAttendance(first.copyWith(status: 'Present'));
 
-      final all = await repo.getAttendanceBySchool('s1');
-      expect(all.length, 1);
-      expect(all.first.status, 'Present');
-    });
+        final all = await repo.getAttendanceBySchool('s1');
+        expect(all.length, 1);
+        expect(all.first.status, 'Present');
+      },
+    );
 
     test('fees can be read for a whole school', () async {
       final repo = TestFeeRepository();
-      await repo.updateFeeStatus(const FeeModel(
-        feeId: 'f1',
-        studentId: 'st1',
-        schoolId: 's1',
-        totalDue: 1000,
-        paidAmount: 1000,
-        status: 'Paid',
-        updatedAt: '2026-03-30',
-      ));
-      await repo.updateFeeStatus(const FeeModel(
-        feeId: 'f2',
-        studentId: 'st2',
-        schoolId: 's1',
-        totalDue: 1000,
-        paidAmount: 0,
-        status: 'Outstanding',
-        updatedAt: '2026-03-30',
-      ));
-      await repo.updateFeeStatus(const FeeModel(
-        feeId: 'f3',
-        studentId: 'st3',
-        schoolId: 's2',
-        totalDue: 1000,
-        paidAmount: 500,
-        status: 'Partial',
-        updatedAt: '2026-03-30',
-      ));
+      await repo.updateFeeStatus(
+        const FeeModel(
+          feeId: 'f1',
+          studentId: 'st1',
+          schoolId: 's1',
+          totalDue: 1000,
+          paidAmount: 1000,
+          status: 'Paid',
+          updatedAt: '2026-03-30',
+        ),
+      );
+      await repo.updateFeeStatus(
+        const FeeModel(
+          feeId: 'f2',
+          studentId: 'st2',
+          schoolId: 's1',
+          totalDue: 1000,
+          paidAmount: 0,
+          status: 'Outstanding',
+          updatedAt: '2026-03-30',
+        ),
+      );
+      await repo.updateFeeStatus(
+        const FeeModel(
+          feeId: 'f3',
+          studentId: 'st3',
+          schoolId: 's2',
+          totalDue: 1000,
+          paidAmount: 500,
+          status: 'Partial',
+          updatedAt: '2026-03-30',
+        ),
+      );
 
       final fees = await repo.getFeesBySchool('s1');
       expect(fees.length, 2);
@@ -418,26 +437,30 @@ void main() {
 
     test('exams can be read district-wide and fetched by id', () async {
       final repo = TestExamRepository();
-      await repo.saveExam(const ExamModel(
-        examId: 'ex1',
-        schoolId: 's1',
-        className: 'Class 10',
-        subject: 'Maths',
-        date: '2026-04-15',
-        startTime: '10:00',
-        endTime: '12:00',
-        createdBy: 't1',
-      ));
-      await repo.saveExam(const ExamModel(
-        examId: 'ex2',
-        schoolId: 's2',
-        className: 'Class 10',
-        subject: 'Maths',
-        date: '2026-04-16',
-        startTime: '10:00',
-        endTime: '12:00',
-        createdBy: 't2',
-      ));
+      await repo.saveExam(
+        const ExamModel(
+          examId: 'ex1',
+          schoolId: 's1',
+          className: 'Class 10',
+          subject: 'Maths',
+          date: '2026-04-15',
+          startTime: '10:00',
+          endTime: '12:00',
+          createdBy: 't1',
+        ),
+      );
+      await repo.saveExam(
+        const ExamModel(
+          examId: 'ex2',
+          schoolId: 's2',
+          className: 'Class 10',
+          subject: 'Maths',
+          date: '2026-04-16',
+          startTime: '10:00',
+          endTime: '12:00',
+          createdBy: 't2',
+        ),
+      );
 
       expect((await repo.getAllExams()).length, 2);
       expect((await repo.getExamsBySchool('s1')).length, 1);

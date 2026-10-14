@@ -53,9 +53,9 @@ class AppScreenBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.onBack,
     this.actions,
-  })  : centered = true,
-        showBack = true,
-        subtitle = null;
+  }) : centered = true,
+       showBack = true,
+       subtitle = null;
 
   /// Large left-aligned title, no back button. For a tab root screen.
   const AppScreenBar.large({
@@ -63,9 +63,9 @@ class AppScreenBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.subtitle,
     this.actions,
-  })  : centered = false,
-        showBack = false,
-        onBack = null;
+  }) : centered = false,
+       showBack = false,
+       onBack = null;
 
   /// Height of the bar itself, without the border line.
   /// A taller bar is needed when there is a subtitle under the title.
@@ -99,8 +99,9 @@ class AppScreenBar extends StatelessWidget implements PreferredSizeWidget {
           : null,
       title: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment:
-            centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        crossAxisAlignment: centered
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           Text(
             title,

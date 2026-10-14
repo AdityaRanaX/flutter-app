@@ -15,7 +15,9 @@ void main() {
     expect(theme.colorScheme.primary, AppColors.primary);
   });
 
-  testWidgets('Core UI components render correctly', (WidgetTester tester) async {
+  testWidgets('Core UI components render correctly', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,

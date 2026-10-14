@@ -11,7 +11,7 @@ class FirestoreAttendanceRepository implements AttendanceRepository {
   final FirebaseFirestore? _customFirestore;
 
   FirestoreAttendanceRepository({FirebaseFirestore? firestore})
-      : _customFirestore = firestore;
+    : _customFirestore = firestore;
 
   FirebaseFirestore get _firestore =>
       _customFirestore ?? FirebaseFirestore.instance;

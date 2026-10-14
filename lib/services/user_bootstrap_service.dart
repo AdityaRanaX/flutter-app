@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/user_model.dart';
 import '../repositories/user_repository.dart';
 import 'auth_service.dart';
@@ -27,24 +28,22 @@ class UserBootstrapState {
     this.errorMessage,
   });
 
-  factory UserBootstrapState.unauthenticated() => const UserBootstrapState(
-        status: UserBootstrapStatus.unauthenticated,
-      );
+  factory UserBootstrapState.unauthenticated() =>
+      const UserBootstrapState(status: UserBootstrapStatus.unauthenticated);
 
   factory UserBootstrapState.loading({User? authUser}) => UserBootstrapState(
-        status: UserBootstrapStatus.loading,
-        authUser: authUser,
-      );
+    status: UserBootstrapStatus.loading,
+    authUser: authUser,
+  );
 
   factory UserBootstrapState.profileFound({
     required User authUser,
     required UserModel userModel,
-  }) =>
-      UserBootstrapState(
-        status: UserBootstrapStatus.profileFound,
-        authUser: authUser,
-        userModel: userModel,
-      );
+  }) => UserBootstrapState(
+    status: UserBootstrapStatus.profileFound,
+    authUser: authUser,
+    userModel: userModel,
+  );
 
   factory UserBootstrapState.profileNotFound({required User authUser}) =>
       UserBootstrapState(
@@ -55,12 +54,11 @@ class UserBootstrapState {
   factory UserBootstrapState.invalidProfile({
     required User authUser,
     required UserModel userModel,
-  }) =>
-      UserBootstrapState(
-        status: UserBootstrapStatus.invalidProfile,
-        authUser: authUser,
-        userModel: userModel,
-      );
+  }) => UserBootstrapState(
+    status: UserBootstrapStatus.invalidProfile,
+    authUser: authUser,
+    userModel: userModel,
+  );
 
   factory UserBootstrapState.error(String message, {User? authUser}) =>
       UserBootstrapState(
@@ -76,10 +74,8 @@ class UserBootstrapService {
   final AuthService _authService;
   final UserRepository userRepository;
 
-  UserBootstrapService({
-    AuthService? authService,
-    required this.userRepository,
-  }) : _authService = authService ?? AuthService();
+  UserBootstrapService({AuthService? authService, required this.userRepository})
+    : _authService = authService ?? AuthService();
 
   /// Executes bootstrap for the given authenticated [User] or current Firebase user.
   Future<UserBootstrapState> bootstrapUser([User? currentUser]) async {

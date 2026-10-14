@@ -109,10 +109,7 @@ class AppShell extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(
-          top: BorderSide(
-            color: AppColors.border,
-            width: AppSizes.borderWidth,
-          ),
+          top: BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
         ),
       ),
       child: SafeArea(
