@@ -9,11 +9,15 @@ import '../../../repositories/firestore_fee_repository.dart';
 import '../../../repositories/firestore_school_repository.dart';
 import '../../../repositories/firestore_student_repository.dart';
 import '../../../repositories/firestore_user_repository.dart';
+import '../../../repositories/exam_repository.dart';
+import '../../../repositories/school_repository.dart';
 import '../../../routes/app_routes.dart';
 import '../controllers/district_dashboard_controller.dart';
+import '../controllers/exam_overview_controller.dart';
 import '../controllers/district_data_loader.dart';
 import '../controllers/school_list_controller.dart';
 import 'district_dashboard_screen.dart';
+import 'district_exam_overview_screen.dart';
 import 'school_list_screen.dart';
 
 /// The District Administrator navigation container.
@@ -34,7 +38,18 @@ class DistrictShell extends StatefulWidget {
   /// Shown in the dashboard greeting.
   final String? administratorName;
 
-  const DistrictShell({super.key, this.loader, this.administratorName});
+  /// Supplied by tests. The Exams tab reads exams and schools directly
+  /// rather than through [loader], which gathers the dashboard's figures.
+  final ExamRepository? examRepository;
+  final SchoolRepository? schoolRepository;
+
+  const DistrictShell({
+    super.key,
+    this.loader,
+    this.administratorName,
+    this.examRepository,
+    this.schoolRepository,
+  });
 
   @override
   State<DistrictShell> createState() => _DistrictShellState();
@@ -47,6 +62,7 @@ class _DistrictShellState extends State<DistrictShell> {
   late final DistrictDataLoader _loader;
   late final DistrictDashboardController _dashboardController;
   late final SchoolListController _schoolListController;
+  late final ExamOverviewController _examOverviewController;
 
   @override
   void initState() {
@@ -54,12 +70,17 @@ class _DistrictShellState extends State<DistrictShell> {
     _loader = widget.loader ?? _firestoreLoader();
     _dashboardController = DistrictDashboardController(loader: _loader);
     _schoolListController = SchoolListController(loader: _loader);
+    _examOverviewController = ExamOverviewController(
+      examRepository: widget.examRepository ?? FirestoreExamRepository(),
+      schoolRepository: widget.schoolRepository ?? FirestoreSchoolRepository(),
+    );
   }
 
   @override
   void dispose() {
     _dashboardController.dispose();
     _schoolListController.dispose();
+    _examOverviewController.dispose();
     super.dispose();
   }
 
@@ -102,6 +123,10 @@ class _DistrictShellState extends State<DistrictShell> {
         .pushNamed(AppRoutes.schoolDetails, arguments: schoolId);
   }
 
+  void _openExamDetails(String examId) {
+    Navigator.of(context).pushNamed(AppRoutes.examDetails, arguments: examId);
+  }
+
   Widget _destination(int index) {
     switch (index) {
       case 0:
@@ -116,10 +141,9 @@ class _DistrictShellState extends State<DistrictShell> {
           onSchoolSelected: _openSchoolDetails,
         );
       case 2:
-        // District Exam Overview is Day 7's work.
-        return const PlaceholderDestination(
-          title: 'Exams',
-          icon: Icons.assignment_outlined,
+        return DistrictExamOverviewScreen(
+          controller: _examOverviewController,
+          onExamSelected: _openExamDetails,
         );
       default:
         return const PlaceholderDestination(

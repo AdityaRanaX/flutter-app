@@ -102,16 +102,16 @@ void main() {
     ) async {
       await tester.pumpWidget(wrapShell(const DistrictShell()));
 
-      // Home is the District Dashboard now rather than a placeholder,
-      // and without Firebase behind it the dashboard settles into its
-      // error state. That is the correct behaviour to see here: what this
-      // test is about is that tapping a tab swaps the body.
-      expect(find.text('Exams'), findsOneWidget);
+      // Home, Schools and Exams are all real screens now; Profile is the
+      // last District tab still showing a placeholder. What this test is
+      // about is that tapping a tab swaps the body, so it taps the one
+      // with an unambiguous body to assert on.
+      expect(find.text('Profile'), findsOneWidget);
 
-      await tester.tap(find.text('Exams'));
+      await tester.tap(find.text('Profile'));
       await tester.pump();
 
-      expect(find.byIcon(Icons.assignment_outlined), findsWidgets);
+      expect(find.text('This screen has not been built yet.'), findsOneWidget);
     });
 
     testWidgets('every Student tab can be opened', (tester) async {

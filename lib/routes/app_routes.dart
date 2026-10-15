@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
+import '../features/district/controllers/exam_details_controller.dart';
 import '../features/district/controllers/school_details_controller.dart';
 import '../features/district/screens/district_shell.dart';
+import '../features/district/screens/exam_details_screen.dart';
 import '../features/district/screens/school_details_screen.dart';
 import '../repositories/firestore_attendance_repository.dart';
 import '../repositories/firestore_exam_repository.dart';
@@ -25,6 +27,11 @@ abstract class AppRoutes {
   /// passed rather than the school itself so the details screen reloads
   /// the record instead of trusting data the list happened to be holding.
   static const String schoolDetails = '/school-details';
+
+  /// Takes the selected exam's id as its route argument. A subject is
+  /// not enough: several schools and classes can hold an exam in the
+  /// same subject.
+  static const String examDetails = '/exam-details';
   static const String schoolAdminDashboard = '/school-admin-dashboard';
   static const String teacherDashboard = '/teacher-dashboard';
   static const String studentDashboard = '/student-dashboard';
@@ -87,6 +94,30 @@ abstract class AppRoutes {
             attendanceRepository: FirestoreAttendanceRepository(),
             feeRepository: FirestoreFeeRepository(),
             examRepository: FirestoreExamRepository(),
+          ),
+        ),
+        settings: settings,
+      );
+    }
+
+    if (settings.name == examDetails) {
+      final examId = settings.arguments;
+      if (examId is! String || examId.isEmpty) {
+        return MaterialPageRoute(
+          builder: (context) => const _PlaceholderScreen(
+            title: 'Exam Not Specified',
+            subtitle: 'No exam was selected, so there is nothing to show.',
+          ),
+          settings: settings,
+        );
+      }
+      return MaterialPageRoute(
+        builder: (context) => ExamDetailsScreen(
+          examId: examId,
+          controller: ExamDetailsController(
+            examRepository: FirestoreExamRepository(),
+            schoolRepository: FirestoreSchoolRepository(),
+            studentRepository: FirestoreStudentRepository(),
           ),
         ),
         settings: settings,
