@@ -145,6 +145,14 @@ class TestExamRepository implements ExamRepository {
       exams.where((e) => e.schoolId == schoolId).toList();
 
   @override
+  Future<List<ExamModel>> getExamsBySchoolAndClass({
+    required String schoolId,
+    required String className,
+  }) async => exams
+      .where((e) => e.schoolId == schoolId && e.className == className)
+      .toList();
+
+  @override
   Future<List<ExamModel>> getAllExams() async => exams;
 
   @override
@@ -255,6 +263,13 @@ void main() {
       final list = await repo.getExamsBySchool('s1');
       expect(list.length, 1);
       expect(list.first.subject, 'Science');
+
+      final classExams = await repo.getExamsBySchoolAndClass(
+        schoolId: 's1',
+        className: '10',
+      );
+      expect(classExams.length, 1);
+      expect(classExams.first.examId, 'ex1');
     });
   });
 

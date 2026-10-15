@@ -5,6 +5,12 @@ abstract class ExamRepository {
   /// Every exam at one school.
   Future<List<ExamModel>> getExamsBySchool(String schoolId);
 
+  /// Every exam at [schoolId] for [className].
+  Future<List<ExamModel>> getExamsBySchoolAndClass({
+    required String schoolId,
+    required String className,
+  });
+
   /// Every exam the caller is allowed to read, across all schools.
   ///
   /// The District Exam Overview lists exams district-wide, so it cannot
