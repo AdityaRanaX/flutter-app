@@ -4,6 +4,7 @@ class StudentModel {
   final String schoolId;
   final String className;
   final String section;
+  final String? rollNumber;
 
   const StudentModel({
     required this.studentId,
@@ -11,6 +12,7 @@ class StudentModel {
     required this.schoolId,
     required this.className,
     required this.section,
+    this.rollNumber,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class StudentModel {
       'schoolId': schoolId,
       'className': className,
       'section': section,
+      'rollNumber': rollNumber,
     };
   }
 
@@ -30,6 +33,7 @@ class StudentModel {
       schoolId: map['schoolId'] as String? ?? '',
       className: map['className'] as String? ?? '',
       section: map['section'] as String? ?? '',
+      rollNumber: map['rollNumber'] as String?,
     );
   }
 
@@ -39,6 +43,7 @@ class StudentModel {
     String? schoolId,
     String? className,
     String? section,
+    String? rollNumber,
   }) {
     return StudentModel(
       studentId: studentId ?? this.studentId,
@@ -46,6 +51,7 @@ class StudentModel {
       schoolId: schoolId ?? this.schoolId,
       className: className ?? this.className,
       section: section ?? this.section,
+      rollNumber: rollNumber ?? this.rollNumber,
     );
   }
 }

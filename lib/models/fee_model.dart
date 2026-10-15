@@ -6,6 +6,7 @@ class FeeModel {
   final double paidAmount;
   final String status;
   final String updatedAt;
+  final String? remarks;
 
   const FeeModel({
     required this.feeId,
@@ -15,6 +16,7 @@ class FeeModel {
     required this.paidAmount,
     required this.status,
     required this.updatedAt,
+    this.remarks,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +28,7 @@ class FeeModel {
       'paidAmount': paidAmount,
       'status': status,
       'updatedAt': updatedAt,
+      'remarks': remarks,
     };
   }
 
@@ -38,6 +41,7 @@ class FeeModel {
       paidAmount: (map['paidAmount'] as num?)?.toDouble() ?? 0.0,
       status: map['status'] as String? ?? '',
       updatedAt: map['updatedAt'] as String? ?? '',
+      remarks: map['remarks'] as String?,
     );
   }
 
@@ -49,6 +53,7 @@ class FeeModel {
     double? paidAmount,
     String? status,
     String? updatedAt,
+    String? remarks,
   }) {
     return FeeModel(
       feeId: feeId ?? this.feeId,
@@ -58,6 +63,7 @@ class FeeModel {
       paidAmount: paidAmount ?? this.paidAmount,
       status: status ?? this.status,
       updatedAt: updatedAt ?? this.updatedAt,
+      remarks: remarks ?? this.remarks,
     );
   }
 }
