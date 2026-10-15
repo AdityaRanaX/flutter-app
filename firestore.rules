@@ -202,21 +202,45 @@ service cloud.firestore {
 
     // 6. Exams Collection (/exams/{examId})
     match /exams/{examId} {
+      /// Helper function validating required Exam document field types and identifiers
+      function isValidExamData() {
+        return request.resource.data.examId is string &&
+          request.resource.data.examId == examId &&
+          request.resource.data.schoolId is string &&
+          request.resource.data.schoolId.size() > 0 &&
+          request.resource.data.subject is string &&
+          request.resource.data.subject.size() > 0 &&
+          request.resource.data.className is string &&
+          request.resource.data.className.size() > 0 &&
+          request.resource.data.date is string &&
+          request.resource.data.date.size() > 0 &&
+          request.resource.data.startTime is string &&
+          request.resource.data.endTime is string &&
+          request.resource.data.createdBy is string;
+      }
+
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
         getUserSchoolId() == resource.data.schoolId
       );
 
-      allow create: if isSignedIn() && (
+      allow create: if isSignedIn() && isValidExamData() && (
         isDistrictAdmin() ||
-        isSchoolAdmin(request.resource.data.schoolId) ||
-        isTeacher(request.resource.data.schoolId)
+        (
+          (isSchoolAdmin(request.resource.data.schoolId) || isTeacher(request.resource.data.schoolId)) &&
+          request.resource.data.schoolId == getUserSchoolId() &&
+          request.resource.data.createdBy == request.auth.uid
+        )
       );
 
-      allow update: if isSignedIn() && (
+      allow update: if isSignedIn() && isValidExamData() && (
         isDistrictAdmin() ||
-        (isSchoolAdmin(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId) ||
-        (isTeacher(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId)
+        (
+          (isSchoolAdmin(resource.data.schoolId) || isTeacher(resource.data.schoolId)) &&
+          request.resource.data.schoolId == resource.data.schoolId &&
+          request.resource.data.examId == resource.data.examId &&
+          request.resource.data.createdBy == resource.data.createdBy
+        )
       );
 
       allow delete: if isSignedIn() && (
