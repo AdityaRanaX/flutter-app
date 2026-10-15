@@ -50,6 +50,13 @@ class FakeSchoolRepository with FailableRepository implements SchoolRepository {
     }
     return null;
   }
+
+  @override
+  Future<void> saveSchool(SchoolModel school) async {
+    _maybeFail('save school details');
+    schools.removeWhere((s) => s.schoolId == school.schoolId);
+    schools.add(school);
+  }
 }
 
 class FakeStudentRepository

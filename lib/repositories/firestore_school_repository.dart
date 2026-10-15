@@ -46,4 +46,15 @@ class FirestoreSchoolRepository implements SchoolRepository {
       throw RepositoryException.fromFirebase(e, 'load this school');
     }
   }
+
+  @override
+  Future<void> saveSchool(SchoolModel school) async {
+    try {
+      await _collection
+          .doc(school.schoolId)
+          .set(school.toMap(), SetOptions(merge: true));
+    } on FirebaseException catch (e) {
+      throw RepositoryException.fromFirebase(e, 'update school details');
+    }
+  }
 }
