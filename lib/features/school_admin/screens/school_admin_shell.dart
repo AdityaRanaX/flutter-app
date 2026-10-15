@@ -3,13 +3,51 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/app_screen_bar.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/placeholder_destination.dart';
+import '../../../repositories/attendance_repository.dart';
+import '../../../repositories/exam_repository.dart';
+import '../../../repositories/fee_repository.dart';
+import '../../../repositories/firestore_attendance_repository.dart';
+import '../../../repositories/firestore_exam_repository.dart';
+import '../../../repositories/firestore_fee_repository.dart';
+import '../../../repositories/firestore_school_repository.dart';
+import '../../../repositories/firestore_student_repository.dart';
+import '../../../repositories/firestore_user_repository.dart';
+import '../../../repositories/school_repository.dart';
+import '../../../repositories/student_repository.dart';
+import '../../../repositories/user_repository.dart';
+import '../../../services/user_bootstrap_service.dart';
+import '../controllers/school_admin_dashboard_controller.dart';
+import 'school_admin_dashboard_screen.dart';
 
 /// The School Administrator navigation container.
 ///
-/// Same shared [AppShell] as the other roles, with the School Admin tab
-/// set and placeholder destinations behind each tab.
+/// Supplies the School Admin navigation tabs to [AppShell], owns the
+/// dashboard controller for the home screen, and handles tab selection.
 class SchoolAdminShell extends StatefulWidget {
-  const SchoolAdminShell({super.key});
+  final String? schoolId;
+  final String? administratorName;
+  final SchoolAdminDashboardController? dashboardController;
+  final SchoolRepository? schoolRepository;
+  final StudentRepository? studentRepository;
+  final UserRepository? userRepository;
+  final AttendanceRepository? attendanceRepository;
+  final FeeRepository? feeRepository;
+  final ExamRepository? examRepository;
+  final UserBootstrapService? bootstrapService;
+
+  const SchoolAdminShell({
+    super.key,
+    this.schoolId,
+    this.administratorName,
+    this.dashboardController,
+    this.schoolRepository,
+    this.studentRepository,
+    this.userRepository,
+    this.attendanceRepository,
+    this.feeRepository,
+    this.examRepository,
+    this.bootstrapService,
+  });
 
   @override
   State<SchoolAdminShell> createState() => _SchoolAdminShellState();
@@ -18,7 +56,42 @@ class SchoolAdminShell extends StatefulWidget {
 class _SchoolAdminShellState extends State<SchoolAdminShell> {
   int _currentIndex = 0;
 
+  late final SchoolAdminDashboardController _dashboardController;
+
+  @override
+  void initState() {
+    super.initState();
+    final userRepository = widget.userRepository ?? FirestoreUserRepository();
+    _dashboardController =
+        widget.dashboardController ??
+        SchoolAdminDashboardController(
+          schoolRepository:
+              widget.schoolRepository ?? FirestoreSchoolRepository(),
+          studentRepository:
+              widget.studentRepository ?? FirestoreStudentRepository(),
+          userRepository: userRepository,
+          attendanceRepository:
+              widget.attendanceRepository ?? FirestoreAttendanceRepository(),
+          feeRepository: widget.feeRepository ?? FirestoreFeeRepository(),
+          examRepository: widget.examRepository ?? FirestoreExamRepository(),
+          bootstrapService:
+              widget.bootstrapService ??
+              UserBootstrapService(userRepository: userRepository),
+        );
+  }
+
+  @override
+  void dispose() {
+    _dashboardController.dispose();
+    super.dispose();
+  }
+
   static const List<AppNavItem> _tabs = [
+    AppNavItem(
+      label: 'Home',
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+    ),
     AppNavItem(
       label: 'Students',
       icon: Icons.groups_outlined,
@@ -36,11 +109,30 @@ class _SchoolAdminShellState extends State<SchoolAdminShell> {
     ),
   ];
 
-  static const List<Widget> _destinations = [
-    PlaceholderDestination(title: 'Students', icon: Icons.groups_outlined),
-    PlaceholderDestination(title: 'School', icon: Icons.school_outlined),
-    PlaceholderDestination(title: 'Profile', icon: Icons.person_outline),
-  ];
+  Widget _destination(int index) {
+    switch (index) {
+      case 0:
+        return SchoolAdminDashboardScreen(
+          controller: _dashboardController,
+          schoolId: widget.schoolId,
+        );
+      case 1:
+        return const PlaceholderDestination(
+          title: 'Students & Fees',
+          icon: Icons.groups_outlined,
+        );
+      case 2:
+        return const PlaceholderDestination(
+          title: 'School Information',
+          icon: Icons.school_outlined,
+        );
+      default:
+        return const PlaceholderDestination(
+          title: 'Profile',
+          icon: Icons.person_outline,
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +141,7 @@ class _SchoolAdminShellState extends State<SchoolAdminShell> {
       currentIndex: _currentIndex,
       onItemSelected: (index) => setState(() => _currentIndex = index),
       appBar: AppScreenBar.large(title: _tabs[_currentIndex].label),
-      body: _destinations[_currentIndex],
+      body: _destination(_currentIndex),
     );
   }
 }
