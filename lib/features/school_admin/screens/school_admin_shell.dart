@@ -17,16 +17,19 @@ import '../../../repositories/student_repository.dart';
 import '../../../repositories/user_repository.dart';
 import '../../../services/user_bootstrap_service.dart';
 import '../controllers/school_admin_dashboard_controller.dart';
+import '../controllers/school_info_controller.dart';
 import 'school_admin_dashboard_screen.dart';
+import 'school_info_screen.dart';
 
 /// The School Administrator navigation container.
 ///
 /// Supplies the School Admin navigation tabs to [AppShell], owns the
-/// dashboard controller for the home screen, and handles tab selection.
+/// dashboard and school info controllers, and handles tab selection.
 class SchoolAdminShell extends StatefulWidget {
   final String? schoolId;
   final String? administratorName;
   final SchoolAdminDashboardController? dashboardController;
+  final SchoolInfoController? schoolInfoController;
   final SchoolRepository? schoolRepository;
   final StudentRepository? studentRepository;
   final UserRepository? userRepository;
@@ -40,6 +43,7 @@ class SchoolAdminShell extends StatefulWidget {
     this.schoolId,
     this.administratorName,
     this.dashboardController,
+    this.schoolInfoController,
     this.schoolRepository,
     this.studentRepository,
     this.userRepository,
@@ -57,16 +61,22 @@ class _SchoolAdminShellState extends State<SchoolAdminShell> {
   int _currentIndex = 0;
 
   late final SchoolAdminDashboardController _dashboardController;
+  late final SchoolInfoController _schoolInfoController;
 
   @override
   void initState() {
     super.initState();
     final userRepository = widget.userRepository ?? FirestoreUserRepository();
+    final schoolRepository =
+        widget.schoolRepository ?? FirestoreSchoolRepository();
+    final bootstrapService =
+        widget.bootstrapService ??
+        UserBootstrapService(userRepository: userRepository);
+
     _dashboardController =
         widget.dashboardController ??
         SchoolAdminDashboardController(
-          schoolRepository:
-              widget.schoolRepository ?? FirestoreSchoolRepository(),
+          schoolRepository: schoolRepository,
           studentRepository:
               widget.studentRepository ?? FirestoreStudentRepository(),
           userRepository: userRepository,
@@ -74,15 +84,21 @@ class _SchoolAdminShellState extends State<SchoolAdminShell> {
               widget.attendanceRepository ?? FirestoreAttendanceRepository(),
           feeRepository: widget.feeRepository ?? FirestoreFeeRepository(),
           examRepository: widget.examRepository ?? FirestoreExamRepository(),
-          bootstrapService:
-              widget.bootstrapService ??
-              UserBootstrapService(userRepository: userRepository),
+          bootstrapService: bootstrapService,
+        );
+
+    _schoolInfoController =
+        widget.schoolInfoController ??
+        SchoolInfoController(
+          schoolRepository: schoolRepository,
+          bootstrapService: bootstrapService,
         );
   }
 
   @override
   void dispose() {
     _dashboardController.dispose();
+    _schoolInfoController.dispose();
     super.dispose();
   }
 
@@ -122,9 +138,9 @@ class _SchoolAdminShellState extends State<SchoolAdminShell> {
           icon: Icons.groups_outlined,
         );
       case 2:
-        return const PlaceholderDestination(
-          title: 'School Information',
-          icon: Icons.school_outlined,
+        return SchoolInfoScreen(
+          controller: _schoolInfoController,
+          schoolId: widget.schoolId,
         );
       default:
         return const PlaceholderDestination(

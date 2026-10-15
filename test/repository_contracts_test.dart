@@ -50,6 +50,12 @@ class TestSchoolRepository implements SchoolRepository {
     }
     return null;
   }
+
+  @override
+  Future<void> saveSchool(SchoolModel school) async {
+    schools.removeWhere((s) => s.schoolId == school.schoolId);
+    schools.add(school);
+  }
 }
 
 class TestStudentRepository implements StudentRepository {

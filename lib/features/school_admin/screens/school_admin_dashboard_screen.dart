@@ -56,10 +56,7 @@ class _SchoolAdminDashboardScreenState
     );
   }
 
-  Widget _buildDashboard(
-    BuildContext context,
-    SchoolAdminDashboardData data,
-  ) {
+  Widget _buildDashboard(BuildContext context, SchoolAdminDashboardData data) {
     return RefreshIndicator(
       onRefresh: () => widget.controller.load(schoolId: widget.schoolId),
       child: ListView(
@@ -85,10 +82,7 @@ class _SchoolAdminDashboardScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Welcome back, $displayName',
-          style: AppTextStyles.screenTitle,
-        ),
+        Text('Welcome back, $displayName', style: AppTextStyles.screenTitle),
         const SizedBox(height: AppSpacing.xs),
         Text(
           'Overview for ${data.school.schoolName}',
@@ -109,15 +103,9 @@ class _SchoolAdminDashboardScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  school.schoolName,
-                  style: AppTextStyles.cardTitle,
-                ),
+                child: Text(school.schoolName, style: AppTextStyles.cardTitle),
               ),
-              const StatusBadge(
-                label: 'Active',
-                type: StatusType.success,
-              ),
+              const StatusBadge(label: 'Active', type: StatusType.success),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -139,12 +127,10 @@ class _SchoolAdminDashboardScreenState
           ),
           if (school.address != null && school.address!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xs),
-            Text(
-              school.address!,
-              style: AppTextStyles.caption,
-            ),
+            Text(school.address!, style: AppTextStyles.caption),
           ],
-          if ((school.contactNumber != null && school.contactNumber!.isNotEmpty) ||
+          if ((school.contactNumber != null &&
+                  school.contactNumber!.isNotEmpty) ||
               (school.email != null && school.email!.isNotEmpty)) ...[
             const SizedBox(height: AppSpacing.sm),
             const Divider(),
@@ -164,10 +150,7 @@ class _SchoolAdminDashboardScreenState
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        school.contactNumber!,
-                        style: AppTextStyles.caption,
-                      ),
+                      Text(school.contactNumber!, style: AppTextStyles.caption),
                     ],
                   ),
                 if (school.email != null && school.email!.isNotEmpty)
@@ -180,10 +163,7 @@ class _SchoolAdminDashboardScreenState
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        school.email!,
-                        style: AppTextStyles.caption,
-                      ),
+                      Text(school.email!, style: AppTextStyles.caption),
                     ],
                   ),
               ],
