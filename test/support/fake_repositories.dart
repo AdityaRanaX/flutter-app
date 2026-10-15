@@ -203,6 +203,17 @@ class FakeExamRepository with FailableRepository implements ExamRepository {
   }
 
   @override
+  Future<List<ExamModel>> getExamsBySchoolAndClass({
+    required String schoolId,
+    required String className,
+  }) async {
+    _maybeFail('load class exams');
+    return exams
+        .where((e) => e.schoolId == schoolId && e.className == className)
+        .toList();
+  }
+
+  @override
   Future<List<ExamModel>> getAllExams() async {
     _maybeFail('load exams');
     return List.of(exams);

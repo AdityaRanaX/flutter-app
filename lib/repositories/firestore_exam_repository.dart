@@ -35,6 +35,22 @@ class FirestoreExamRepository implements ExamRepository {
   }
 
   @override
+  Future<List<ExamModel>> getExamsBySchoolAndClass({
+    required String schoolId,
+    required String className,
+  }) async {
+    try {
+      final snapshot = await _collection
+          .where(FirestoreFields.schoolId, isEqualTo: schoolId)
+          .where(FirestoreFields.className, isEqualTo: className)
+          .get();
+      return snapshot.docs.map(_toModel).toList();
+    } on FirebaseException catch (e) {
+      throw RepositoryException.fromFirebase(e, 'load class exams');
+    }
+  }
+
+  @override
   Future<List<ExamModel>> getAllExams() async {
     try {
       final snapshot = await _collection.get();
@@ -58,7 +74,9 @@ class FirestoreExamRepository implements ExamRepository {
   @override
   Future<void> saveExam(ExamModel exam) async {
     try {
-      await _collection.doc(exam.examId).set(exam.toMap());
+      await _collection
+          .doc(exam.examId)
+          .set(exam.toMap(), SetOptions(merge: true));
     } on FirebaseException catch (e) {
       throw RepositoryException.fromFirebase(e, 'save this exam');
     }
