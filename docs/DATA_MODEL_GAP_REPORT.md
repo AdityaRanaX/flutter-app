@@ -1,6 +1,6 @@
 # EduLens — Data Model Gap Report
 
-Produced during the Day 5 data-layer work. It compares what the approved
+Produced during the Day 5 data-layer work and updated following the approved model extension task. It compares what the approved
 wireframes display against what the PRD data model actually stores, and
 records the decisions that Days 6 and 7 build on.
 
@@ -113,61 +113,49 @@ Dashboard wireframe states explicitly.
 
 ---
 
-## 5. Unresolved gaps
+## 5. Model Gaps Status Summary
 
-None of these is implemented. Each needs an approved model change first.
+### A. IMPLEMENTED Model Extensions (Backward-Compatible)
 
-| # | Wireframe needs | Model has | Can it be derived? | Status |
+| # | Feature / Field | Model Extended | Property Type | Implementation Details |
 |---|---|---|---|---|
-| 1 | School address | — | No | **Unresolved** |
-| 2 | School contact number | — | No | **Unresolved** |
-| 3 | School email | — | No | **Unresolved** |
-| 4 | Student roll number | — | No | **Unresolved** |
-| 5 | Fee remarks | — | No | **Unresolved** |
-| 6 | Teacher's timetable / today's classes | — | No | **Unresolved** |
-| 7 | Per-exam student Present/Absent | — | No | **Unresolved** |
-| 8 | Attendance status `Leave` | `status` is free text | n/a | **Needs a decision** |
-| 9 | Exam status (`Scheduled`) | — | Partly | **Needs a decision** |
+| 1 | School Address | `SchoolModel` | `String? address` | Optional address string for school location details. |
+| 2 | School Contact Number | `SchoolModel` | `String? contactNumber` | Optional phone/contact number string. |
+| 3 | School Email | `SchoolModel` | `String? email` | Optional school email address string. |
+| 4 | Student Roll Number | `StudentModel` | `String? rollNumber` | Optional roll number string (preserves distinct `studentId`). |
+| 5 | Fee Remarks | `FeeModel` | `String? remarks` | Optional latest remarks note on fee status updates. |
 
-Notes on the ones that are easy to get wrong:
-
-**(7) Exam attendance is not daily attendance.** `AttendanceModel` records
-a student, a school, a teacher, a date and a status. It has no `examId`,
-so there is no way to say whether a student sat a particular exam. A
-daily record that happens to fall on an exam date describes a different
-event. Day 7's Exam Details therefore ships a student list **without**
-Present/Absent labels, and cannot claim full wireframe parity until an
-exam-attendance model is approved.
-
-**(8) `Leave`.** The PRD lists Present/Absent; School Details shows
-Present/Absent/Leave. `status` is an unconstrained string, so `Leave`
-can be stored without a schema change — but no approved writer produces
-it today. The attendance percentage formula above already handles it
-correctly either way, since it counts `Present` against the total rather
-than treating every non-present record as absent.
-
-**(9) Exam status.** `Scheduled` could be derived from the exam date
-relative to now, but "scheduled vs completed" is a lifecycle decision,
-not a display one. Nothing is stored and nothing is derived until the
-rule is approved.
+*Note: All 5 extended fields are optional (`String?`) to guarantee 100% backward compatibility with legacy Firestore documents.*
 
 ---
 
-## 6. What this allows Days 6 and 7 to build
+### B. STILL UNRESOLVED Gaps (Requires Future Architectural Design)
 
-Supported by the model today, with no further decisions needed:
+| # | Wireframe Needs | Current Model | Why Unresolved |
+|---|---|---|---|
+| 6 | Teacher Timetable / Today's Classes | — | Requires an approved schema for class assignments, schedule, and teacher-class relationships. |
+| 7 | Per-Exam Student Attendance | — | Daily `AttendanceModel` lacks `examId`. Treating daily attendance as exam attendance is invalid. |
+| 8 | Attendance Status `Leave` | Free-text `status` | PRD specifies Present/Absent; wireframe shows Leave. No approved writer produces `Leave` today. |
+| 9 | Exam Status (`Scheduled`) | — | `Scheduled` is a lifecycle status requiring team decision rather than date-inferred guessing. |
 
-- District Dashboard: total schools, average attendance, fee overview,
-  upcoming exams in the next seven days, attendance-below-70% attention
+---
+
+### C. FOLLOW-UP UI Work Required
+
+- **School Information Screen**: Update UI forms to capture and display `address`, `contactNumber`, and `email`.
+- **Student/Fee Management Screen**: Update UI table columns to render `rollNumber`.
+- **Edit Fee Status Screen**: Update form to capture and save `remarks`.
+- **Legacy Record Migration**: Run optional migration scripts if backfilling legacy documents is required.
+
+---
+
+## 6. Scope Overview
+
+Supported by the model today:
+
+- District Dashboard: total schools, average attendance, fee overview, upcoming exams in seven days, attention alerts
 - School List: name, student count, teacher count, attendance %, fees-paid %, exam count
 - School Details: attendance breakdown, fee breakdown, upcoming exams
 - District Exam Overview: subject, date, time, school name, Upcoming/All
 - Exam Details: subject, school, date, times, class, total students, student list
-
-Blocked until a gap above is resolved:
-
-- School Information (address, contact, email) — gaps 1–3
-- Student/Fee Management roll number column — gap 4
-- Edit Fee Status remarks field — gap 5
-- Teacher Dashboard "today's classes" — gap 6
-- Exam Details Present/Absent per student — gap 7
+- Extended Fields: School contact/address/email, Student roll number, Fee remarks

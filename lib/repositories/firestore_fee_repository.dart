@@ -51,7 +51,9 @@ class FirestoreFeeRepository implements FeeRepository {
   @override
   Future<void> updateFeeStatus(FeeModel fee) async {
     try {
-      await _collection.doc(fee.feeId).set(fee.toMap());
+      await _collection
+          .doc(fee.feeId)
+          .set(fee.toMap(), SetOptions(merge: true));
     } on FirebaseException catch (e) {
       throw RepositoryException.fromFirebase(e, 'update this fee record');
     }

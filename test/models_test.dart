@@ -31,38 +31,119 @@ void main() {
       expect(copied.uid, 'u123');
     });
 
-    test('SchoolModel serialization', () {
-      const school = SchoolModel(
+    test('SchoolModel serialization with approved optional fields & legacy support', () {
+      // Legacy document without optional fields
+      final legacyMap = {
+        'schoolId': 's101',
+        'schoolName': 'Central High School',
+        'location': 'District 1',
+      };
+
+      final fromLegacy = SchoolModel.fromMap(legacyMap);
+      expect(fromLegacy.schoolId, 's101');
+      expect(fromLegacy.schoolName, 'Central High School');
+      expect(fromLegacy.location, 'District 1');
+      expect(fromLegacy.address, isNull);
+      expect(fromLegacy.contactNumber, isNull);
+      expect(fromLegacy.email, isNull);
+
+      // Full document with new approved fields
+      const fullSchool = SchoolModel(
         schoolId: 's101',
         schoolName: 'Central High School',
         location: 'District 1',
+        address: '123 Education Lane',
+        contactNumber: '+1-555-0199',
+        email: 'info@centralhigh.edu',
       );
 
-      final map = school.toMap();
-      final fromMap = SchoolModel.fromMap(map);
+      final fullMap = fullSchool.toMap();
+      final fromFull = SchoolModel.fromMap(fullMap);
 
-      expect(fromMap.schoolId, 's101');
-      expect(fromMap.schoolName, 'Central High School');
-      expect(fromMap.location, 'District 1');
+      expect(fromFull.address, '123 Education Lane');
+      expect(fromFull.contactNumber, '+1-555-0199');
+      expect(fromFull.email, 'info@centralhigh.edu');
+
+      final copied = fullSchool.copyWith(email: 'contact@centralhigh.edu');
+      expect(copied.email, 'contact@centralhigh.edu');
+      expect(copied.address, '123 Education Lane');
     });
 
-    test('StudentModel serialization', () {
+    test('StudentModel serialization with rollNumber & legacy support', () {
+      // Legacy document
+      final legacyMap = {
+        'studentId': 'st10',
+        'name': 'Alice Smith',
+        'schoolId': 's101',
+        'className': '10',
+        'section': 'A',
+      };
+
+      final fromLegacy = StudentModel.fromMap(legacyMap);
+      expect(fromLegacy.studentId, 'st10');
+      expect(fromLegacy.rollNumber, isNull);
+
+      // Full document with rollNumber
       const student = StudentModel(
         studentId: 'st10',
         name: 'Alice Smith',
         schoolId: 's101',
         className: '10',
         section: 'A',
+        rollNumber: 'RN-1002',
       );
 
       final map = student.toMap();
       final fromMap = StudentModel.fromMap(map);
 
+      expect(fromMap.rollNumber, 'RN-1002');
       expect(fromMap.studentId, 'st10');
-      expect(fromMap.name, 'Alice Smith');
-      expect(fromMap.schoolId, 's101');
-      expect(fromMap.className, '10');
-      expect(fromMap.section, 'A');
+
+      final copied = student.copyWith(rollNumber: 'RN-1003');
+      expect(copied.rollNumber, 'RN-1003');
+      expect(copied.name, 'Alice Smith');
+    });
+
+    test('FeeModel serialization with remarks & legacy support', () {
+      // Legacy document
+      final legacyMap = {
+        'feeId': 'f99',
+        'studentId': 'st10',
+        'schoolId': 's101',
+        'totalDue': 500.0,
+        'paidAmount': 250.0,
+        'status': 'Partial',
+        'updatedAt': '2026-03-30T10:00:00Z',
+      };
+
+      final fromLegacy = FeeModel.fromMap(legacyMap);
+      expect(fromLegacy.feeId, 'f99');
+      expect(fromLegacy.remarks, isNull);
+
+      // Full document with remarks
+      const fee = FeeModel(
+        feeId: 'f99',
+        studentId: 'st10',
+        schoolId: 's101',
+        totalDue: 500.0,
+        paidAmount: 250.0,
+        status: 'Partial',
+        updatedAt: '2026-03-30T10:00:00Z',
+        remarks: 'First installment paid on time.',
+      );
+
+      final map = fee.toMap();
+      final fromMap = FeeModel.fromMap(map);
+
+      expect(fromMap.feeId, 'f99');
+      expect(fromMap.totalDue, 500.0);
+      expect(fromMap.paidAmount, 250.0);
+      expect(fromMap.status, 'Partial');
+      expect(fromMap.remarks, 'First installment paid on time.');
+
+      final copied = fee.copyWith(remarks: 'Updated receipt issue.');
+      expect(copied.remarks, 'Updated receipt issue.');
+      expect(copied.paidAmount, 250.0);
     });
 
     test('AttendanceModel serialization', () {
@@ -80,26 +161,6 @@ void main() {
 
       expect(fromMap.attendanceId, 'a55');
       expect(fromMap.status, 'Present');
-    });
-
-    test('FeeModel serialization', () {
-      const fee = FeeModel(
-        feeId: 'f99',
-        studentId: 'st10',
-        schoolId: 's101',
-        totalDue: 500.0,
-        paidAmount: 250.0,
-        status: 'Partial',
-        updatedAt: '2026-03-30T10:00:00Z',
-      );
-
-      final map = fee.toMap();
-      final fromMap = FeeModel.fromMap(map);
-
-      expect(fromMap.feeId, 'f99');
-      expect(fromMap.totalDue, 500.0);
-      expect(fromMap.paidAmount, 250.0);
-      expect(fromMap.status, 'Partial');
     });
 
     test('ExamModel serialization', () {
