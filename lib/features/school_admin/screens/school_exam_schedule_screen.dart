@@ -63,20 +63,19 @@ class _SchoolExamScheduleScreenState extends State<SchoolExamScheduleScreen> {
   void _openScheduleDialog(String schoolId) {
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => _ScheduleExamDialog(
-            schoolId: schoolId,
-            currentUserId: widget.currentUserId ?? 'admin',
-            controller: widget.controller,
-            onSaved: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('New exam scheduled successfully.'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-          ),
+      builder: (dialogContext) => _ScheduleExamDialog(
+        schoolId: schoolId,
+        currentUserId: widget.currentUserId ?? 'admin',
+        controller: widget.controller,
+        onSaved: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('New exam scheduled successfully.'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -307,7 +306,8 @@ class _ScheduleExamDialogState extends State<_ScheduleExamDialog> {
                   ),
                 ],
               ),
-              if (_formError != null || widget.controller.saveError != null) ...[
+              if (_formError != null ||
+                  widget.controller.saveError != null) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   _formError ?? widget.controller.saveError!,

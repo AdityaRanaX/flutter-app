@@ -24,6 +24,12 @@ abstract class AttendanceRepository {
   /// percentage on the Student Dashboard.
   Future<List<AttendanceModel>> getAttendanceByStudent(String studentId);
 
+  /// Single attendance record for [studentId] on [date], or null when not recorded.
+  Future<AttendanceModel?> getAttendanceByStudentAndDate({
+    required String studentId,
+    required String date,
+  });
+
   /// Creates or replaces a single record, keyed on its `attendanceId`.
   Future<void> saveAttendance(AttendanceModel attendance);
 
