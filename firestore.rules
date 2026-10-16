@@ -152,22 +152,50 @@ service cloud.firestore {
 
     // 4. Attendance Collection (/attendance/{attendanceId})
     match /attendance/{attendanceId} {
+      /// Helper function validating required Attendance document field types and identifiers
+      function isValidAttendanceData() {
+        return request.resource.data.attendanceId is string &&
+          request.resource.data.attendanceId == attendanceId &&
+          request.resource.data.studentId is string &&
+          request.resource.data.studentId.size() > 0 &&
+          request.resource.data.schoolId is string &&
+          request.resource.data.schoolId.size() > 0 &&
+          request.resource.data.teacherId is string &&
+          request.resource.data.teacherId.size() > 0 &&
+          request.resource.data.date is string &&
+          request.resource.data.date.size() > 0 &&
+          request.resource.data.status is string &&
+          request.resource.data.status.size() > 0;
+      }
+
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
         getUserSchoolId() == resource.data.schoolId ||
         (isStudent() && resource.data.studentId == request.auth.uid)
       );
 
-      allow create: if isSignedIn() && (
+      allow create: if isSignedIn() && isValidAttendanceData() && (
         isDistrictAdmin() ||
-        isSchoolAdmin(request.resource.data.schoolId) ||
-        isTeacher(request.resource.data.schoolId)
+        (
+          isSchoolAdmin(request.resource.data.schoolId) &&
+          request.resource.data.schoolId == getUserSchoolId()
+        ) ||
+        (
+          isTeacher(request.resource.data.schoolId) &&
+          request.resource.data.schoolId == getUserSchoolId() &&
+          request.resource.data.teacherId == request.auth.uid
+        )
       );
 
-      allow update: if isSignedIn() && (
+      allow update: if isSignedIn() && isValidAttendanceData() && (
         isDistrictAdmin() ||
-        (isSchoolAdmin(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId) ||
-        (isTeacher(resource.data.schoolId) && request.resource.data.schoolId == resource.data.schoolId)
+        (
+          (isSchoolAdmin(resource.data.schoolId) || isTeacher(resource.data.schoolId)) &&
+          request.resource.data.schoolId == resource.data.schoolId &&
+          request.resource.data.attendanceId == resource.data.attendanceId &&
+          request.resource.data.studentId == resource.data.studentId &&
+          request.resource.data.date == resource.data.date
+        )
       );
 
       allow delete: if isSignedIn() && (
