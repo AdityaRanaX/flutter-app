@@ -151,6 +151,18 @@ class FakeAttendanceRepository
   }
 
   @override
+  Future<AttendanceModel?> getAttendanceByStudentAndDate({
+    required String studentId,
+    required String date,
+  }) async {
+    _maybeFail('load attendance');
+    for (final a in records) {
+      if (a.studentId == studentId && a.date == date) return a;
+    }
+    return null;
+  }
+
+  @override
   Future<void> saveAttendance(AttendanceModel attendance) async {
     _maybeFail('save attendance');
     records.removeWhere((a) => a.attendanceId == attendance.attendanceId);

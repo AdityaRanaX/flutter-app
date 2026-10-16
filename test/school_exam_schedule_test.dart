@@ -73,25 +73,28 @@ Widget _wrap(Widget child) => MaterialApp(
 
 void main() {
   group('SchoolExamScheduleController Unit Tests', () {
-    test('loads school-scoped exams and filters upcoming exams by default', () async {
-      final f = _ExamScheduleFixture()..seed();
-      final controller = SchoolExamScheduleController(
-        examRepository: f.exams,
-        schoolRepository: f.schools,
-        clock: _fixedNow,
-      );
+    test(
+      'loads school-scoped exams and filters upcoming exams by default',
+      () async {
+        final f = _ExamScheduleFixture()..seed();
+        final controller = SchoolExamScheduleController(
+          examRepository: f.exams,
+          schoolRepository: f.schools,
+          clock: _fixedNow,
+        );
 
-      await controller.load(schoolId: 's1');
+        await controller.load(schoolId: 's1');
 
-      expect(controller.state.status, ViewStatus.ready);
-      final visible = controller.state.data!;
-      expect(visible.length, 1);
-      expect(visible.first.subject, 'Physics');
+        expect(controller.state.status, ViewStatus.ready);
+        final visible = controller.state.data!;
+        expect(visible.length, 1);
+        expect(visible.first.subject, 'Physics');
 
-      // Switch filter to All
-      controller.setFilter(ExamFilter.all);
-      expect(controller.state.data!.length, 2);
-    });
+        // Switch filter to All
+        controller.setFilter(ExamFilter.all);
+        expect(controller.state.data!.length, 2);
+      },
+    );
 
     test('adds and persists new exam record for school', () async {
       final f = _ExamScheduleFixture()..seed();
@@ -139,7 +142,9 @@ void main() {
   });
 
   group('SchoolExamScheduleScreen Widget Tests', () {
-    testWidgets('renders upcoming exams list and filters correctly', (tester) async {
+    testWidgets('renders upcoming exams list and filters correctly', (
+      tester,
+    ) async {
       final f = _ExamScheduleFixture()..seed();
       final controller = SchoolExamScheduleController(
         examRepository: f.exams,
@@ -150,17 +155,15 @@ void main() {
       await controller.load(schoolId: 's1');
 
       await tester.pumpWidget(
-        _wrap(
-          SchoolExamScheduleScreen(
-            controller: controller,
-            schoolId: 's1',
-          ),
-        ),
+        _wrap(SchoolExamScheduleScreen(controller: controller, schoolId: 's1')),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Physics'), findsOneWidget);
-      expect(find.text('History'), findsNothing); // Past exam filtered out in Upcoming
+      expect(
+        find.text('History'),
+        findsNothing,
+      ); // Past exam filtered out in Upcoming
 
       // Switch to All Exams
       await tester.tap(find.text('All Exams'));

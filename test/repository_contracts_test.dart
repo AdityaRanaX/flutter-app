@@ -102,6 +102,17 @@ class TestAttendanceRepository implements AttendanceRepository {
   ) async => records.where((a) => a.studentId == studentId).toList();
 
   @override
+  Future<AttendanceModel?> getAttendanceByStudentAndDate({
+    required String studentId,
+    required String date,
+  }) async {
+    for (final a in records) {
+      if (a.studentId == studentId && a.date == date) return a;
+    }
+    return null;
+  }
+
+  @override
   Future<void> saveAttendance(AttendanceModel attendance) async {
     records.removeWhere((a) => a.attendanceId == attendance.attendanceId);
     records.add(attendance);
@@ -229,6 +240,13 @@ void main() {
       );
       expect(list.length, 1);
       expect(list.first.status, 'Present');
+
+      final singleRecord = await repo.getAttendanceByStudentAndDate(
+        studentId: 'st1',
+        date: '2026-03-30',
+      );
+      expect(singleRecord?.attendanceId, 'att1');
+      expect(singleRecord?.status, 'Present');
     });
 
     test('FeeRepository contract test', () async {

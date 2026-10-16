@@ -63,9 +63,29 @@ class FirestoreAttendanceRepository implements AttendanceRepository {
   }
 
   @override
+  Future<AttendanceModel?> getAttendanceByStudentAndDate({
+    required String studentId,
+    required String date,
+  }) async {
+    try {
+      final snapshot = await _collection
+          .where(FirestoreFields.studentId, isEqualTo: studentId)
+          .where(FirestoreFields.date, isEqualTo: date)
+          .limit(1)
+          .get();
+      if (snapshot.docs.isEmpty) return null;
+      return _toModel(snapshot.docs.first);
+    } on FirebaseException catch (e) {
+      throw RepositoryException.fromFirebase(e, 'load attendance for student');
+    }
+  }
+
+  @override
   Future<void> saveAttendance(AttendanceModel attendance) async {
     try {
-      await _collection.doc(attendance.attendanceId).set(attendance.toMap());
+      await _collection
+          .doc(attendance.attendanceId)
+          .set(attendance.toMap(), SetOptions(merge: true));
     } on FirebaseException catch (e) {
       throw RepositoryException.fromFirebase(e, 'save attendance');
     }
@@ -77,7 +97,11 @@ class FirestoreAttendanceRepository implements AttendanceRepository {
     try {
       final batch = _firestore.batch();
       for (final record in records) {
-        batch.set(_collection.doc(record.attendanceId), record.toMap());
+        batch.set(
+          _collection.doc(record.attendanceId),
+          record.toMap(),
+          SetOptions(merge: true),
+        );
       }
       await batch.commit();
     } on FirebaseException catch (e) {
