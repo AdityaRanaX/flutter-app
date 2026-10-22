@@ -158,4 +158,110 @@ Supported by the model today:
 - School Details: attendance breakdown, fee breakdown, upcoming exams
 - District Exam Overview: subject, date, time, school name, Upcoming/All
 - Exam Details: subject, school, date, times, class, total students, student list
+- Student Dashboard: the signed-in student's own attendance percentage, fee status and upcoming exams, read-only
 - Extended Fields: School contact/address/email, Student roll number, Fee remarks
+
+---
+
+## 7. Student Dashboard identity and authorization
+
+Recorded during the Day 11 student-access review. The Student Dashboard
+reads a single student's own attendance, fees and examination schedule,
+so the question it raises is not "what does the model store" but "how
+does an authenticated user become a known student".
+
+### The enforced identity mapping
+
+`UserModel` holds `uid`, and `StudentModel` holds `studentId`. **Neither
+model carries a field linking the two.** The link is not absent, though —
+it is already asserted by the deployed `firestore.rules`, in three
+places:
+
+```
+// students
+(isStudent() && (resource.data.studentId == request.auth.uid ||
+                 studentId == request.auth.uid))
+// attendance, fees
+(isStudent() && resource.data.studentId == request.auth.uid)
+```
+
+**Decision: the approved mapping is `students.studentId == Firebase Auth
+UID`,** because the rules already enforce exactly that and nothing else
+can be read by a student. The app layer resolves a student's records from
+`UserModel.uid` on that basis.
+
+This is written down rather than introduced: adding a `studentId` field
+to `UserModel` would create a second source of truth that the rules do
+not check, and a record whose two identifiers disagreed would read as
+authorised to the app and unauthorised to Firestore.
+
+A consequence worth stating: a student whose `students` document id and
+`studentId` field do not equal their Auth UID is invisible to themselves.
+That is an **unavailable identity mapping**, and the dashboard reports it
+as an error rather than as an empty record — "we cannot identify you" and
+"you have no attendance yet" are different facts.
+
+### Exams are school-scoped, and that is a provisioning dependency
+
+Attendance and fees are matched to the student directly. Exams are not —
+an exam has no `studentId`, so the rule is school-scoped:
+
+```
+// exams
+allow read: if isDistrictAdmin() || getUserSchoolId() == resource.data.schoolId
+```
+
+`getUserSchoolId()` reads `users/{uid}.schoolId`. The `users` create rule
+deliberately forbids a self-registering student from choosing one:
+
+```
+request.resource.data.role == 'student' &&
+(!('schoolId' in request.resource.data) || request.resource.data.schoolId == null ||
+  request.resource.data.schoolId == '')
+```
+
+**So a self-registered student has no `schoolId` and cannot read any
+exam.** Their upcoming-examinations section is permission-denied until a
+School Admin or District Admin sets `schoolId` on their user profile —
+which the rules already permit those roles to do.
+
+This is a **provisioning requirement, not a rules defect**, and it is
+deliberately not fixed by widening the exam read rule. Granting students
+a broader exam read would hand every student every school's examination
+schedule to remove one setup step. The dashboard therefore surfaces the
+denial as its unauthorized state.
+
+### Requirement verification
+
+Checked by inspecting the deployed rules. **No rule was changed**: every
+Day 11 authorization requirement is already satisfied.
+
+| # | Requirement | Enforced by | Status |
+|---|---|---|---|
+| 1 | Only authenticated users reach student data | `isSignedIn()` guards every collection | Satisfied |
+| 2 | A student reads only their own attendance / fees | `resource.data.studentId == request.auth.uid` | Satisfied |
+| 2a | A student reads their own examination schedule | `getUserSchoolId() == resource.data.schoolId` | Satisfied, requires `users.schoolId` |
+| 3 | A student cannot write attendance | create/update limited to district, school admin, teacher | Satisfied |
+| 4 | A student cannot change fee amounts or status | create/update limited to district, school admin | Satisfied |
+| 5 | A student cannot write examinations | create/update limited to district, school admin, teacher | Satisfied |
+| 6 | Staff keep their existing access | rules untouched by Day 11 | Satisfied |
+| 7 | Substituting another id grants nothing | reads match on stored `resource.data`, never on client input | Satisfied |
+
+Requirement 7 holds because every student read compares `request.auth.uid`
+against the **stored** document rather than against anything the client
+sends. Asking for another student's document returns a denial, not that
+student's record.
+
+### Verification limits
+
+The table above is **static inspection of the rules source**. The
+Firebase Emulator Suite is not configured in this repository, and no
+rules test harness exists, so:
+
+> **Runtime Firestore Security Rules authorization remains unverified.**
+
+Widget and controller tests in `test/` run against the in-memory fakes in
+`test/support/fake_repositories.dart`. They verify how the dashboard
+*responds* to a permission denial. They execute no rules and prove
+nothing about whether Firestore would actually deny the request. Rules
+were not deployed as part of this work.
