@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_flutter_edulens/app.dart';
+import 'package:my_flutter_edulens/features/student/screens/student_shell.dart';
 import 'package:my_flutter_edulens/routes/app_routes.dart';
 
 void main() {
@@ -80,7 +81,13 @@ void main() {
       Navigator.pushNamed(context, AppRoutes.studentDashboard);
       await tester.pumpAndSettle();
 
-      expect(find.text('Student Home'), findsOneWidget);
+      // The Home tab is a real, Firebase-backed dashboard now rather than
+      // a placeholder, and this test has no Firebase. What the route has
+      // to prove is that it resolves to the Student shell; what the
+      // dashboard renders once it has data is covered by
+      // student_dashboard_test.dart.
+      expect(find.byType(StudentShell), findsOneWidget);
+      expect(find.text('Exams'), findsOneWidget);
     });
 
     testWidgets('Navigates to Profile route', (WidgetTester tester) async {
