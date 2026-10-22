@@ -1,7 +1,14 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_flutter_edulens/core/state/view_state.dart';
+import 'package:my_flutter_edulens/core/theme/app_theme.dart';
+import 'package:my_flutter_edulens/core/widgets/state_message.dart';
 import 'package:my_flutter_edulens/core/utils/metrics.dart';
 import 'package:my_flutter_edulens/features/student/controllers/student_dashboard_controller.dart';
+import 'package:my_flutter_edulens/features/student/screens/student_dashboard_screen.dart';
+import 'package:my_flutter_edulens/models/fee_model.dart';
 import 'package:my_flutter_edulens/models/student_model.dart';
 import 'package:my_flutter_edulens/models/user_model.dart';
 import 'package:my_flutter_edulens/repositories/repository_exception.dart';
@@ -40,10 +47,23 @@ StudentModel studentRecord({
   rollNumber: '21',
 );
 
+/// A student repository whose reads can be held open, so a test can
+/// observe the loading state instead of racing past it.
+class _GatedStudentRepository extends FakeStudentRepository {
+  Completer<void>? gate;
+
+  @override
+  Future<StudentModel?> getStudentById(String studentId) async {
+    final open = gate;
+    if (open != null) await open.future;
+    return super.getStudentById(studentId);
+  }
+}
+
 /// Builds a controller over fakes, with every collaborator exposed so a
 /// test can seed records or force a failure on exactly one of them.
 class _Harness {
-  final students = FakeStudentRepository();
+  final students = _GatedStudentRepository();
   final attendance = FakeAttendanceRepository();
   final fees = FakeFeeRepository();
   final exams = FakeExamRepository();
@@ -328,6 +348,238 @@ void main() {
     test('starts in the loading state before any load runs', () {
       final h = _Harness();
       expect(h.controller.state.status, ViewStatus.loading);
+    });
+  });
+
+  // -------------------------------------------------------------- widget
+
+  group('StudentDashboardScreen', () {
+    Future<void> pumpDashboard(
+      WidgetTester tester,
+      StudentDashboardController controller,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(body: StudentDashboardScreen(controller: controller)),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('renders attendance, fees and upcoming exams', (tester) async {
+      final h = _Harness()..seedStudent();
+      h.attendance.records.addAll([
+        attendance('a1', schoolId: 'sch1', status: 'Present', studentId: kUid),
+        attendance('a2', schoolId: 'sch1', status: 'Present', studentId: kUid),
+        attendance('a3', schoolId: 'sch1', status: 'Absent', studentId: kUid),
+      ]);
+      h.fees.fees.add(
+        fee(
+          'f1',
+          schoolId: 'sch1',
+          totalDue: 1000,
+          paidAmount: 1000,
+          status: 'Paid',
+          studentId: kUid,
+        ),
+      );
+      h.exams.exams.add(
+        exam('e1', schoolId: 'sch1', date: '2026-10-25', subject: 'Physics'),
+      );
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(find.text('Welcome back, Asha Rao'), findsOneWidget);
+      // The roll number is shown when the record carries one.
+      expect(find.textContaining('Roll 21'), findsOneWidget);
+      // 2 Present out of 3 records.
+      expect(find.text('67%'), findsOneWidget);
+      expect(find.text('Paid'), findsOneWidget);
+      expect(find.text('1000'), findsWidgets);
+      expect(find.text('Physics'), findsOneWidget);
+    });
+
+    testWidgets('no attendance shows unavailable, never zero per cent', (
+      tester,
+    ) async {
+      final h = _Harness()..seedStudent();
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(find.text('—'), findsOneWidget);
+      expect(find.text('0%'), findsNothing);
+      expect(
+        find.text('No attendance has been recorded for you yet'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a student below the threshold is flagged', (tester) async {
+      final h = _Harness()..seedStudent();
+      h.attendance.records.addAll([
+        attendance('a1', schoolId: 'sch1', status: 'Present', studentId: kUid),
+        attendance('a2', schoolId: 'sch1', status: 'Absent', studentId: kUid),
+      ]);
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(find.text('50%'), findsOneWidget);
+      expect(find.text('Below 70%'), findsOneWidget);
+    });
+
+    testWidgets('no fee record shows an empty fee section', (tester) async {
+      final h = _Harness()..seedStudent();
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(
+        find.text('No fee record has been raised for you yet.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a part-paid fee shows the outstanding balance', (
+      tester,
+    ) async {
+      final h = _Harness()..seedStudent();
+      h.fees.fees.add(
+        const FeeModel(
+          feeId: 'f1',
+          studentId: kUid,
+          schoolId: 'sch1',
+          totalDue: 1000,
+          paidAmount: 400,
+          status: 'Partial',
+          updatedAt: '2026-10-01',
+          remarks: 'Second instalment due in November',
+        ),
+      );
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(find.text('Partial'), findsOneWidget);
+      expect(find.text('Outstanding'), findsOneWidget);
+      expect(find.text('600'), findsOneWidget);
+      expect(find.text('Second instalment due in November'), findsOneWidget);
+    });
+
+    testWidgets('an empty schedule shows its own empty state', (tester) async {
+      final h = _Harness()..seedStudent();
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(find.text('No upcoming exams'), findsOneWidget);
+    });
+
+    testWidgets('a denied exam read is shown as a denial, not as no exams', (
+      tester,
+    ) async {
+      final h = _Harness()..seedStudent();
+      h.attendance.records.add(
+        attendance('a1', schoolId: 'sch1', status: 'Present', studentId: kUid),
+      );
+      h.exams.failWith = RepositoryErrorKind.permissionDenied;
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      // The exam section reports the denial ...
+      expect(find.text('Access denied'), findsOneWidget);
+      expect(find.text('No upcoming exams'), findsNothing);
+      // ... while the sections that did load are still on screen.
+      expect(find.text('100%'), findsOneWidget);
+    });
+
+    testWidgets('shows a spinner while reloading', (tester) async {
+      final h = _Harness()..seedStudent();
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      // Hold the next read open so the loading state can be observed.
+      final gate = Completer<void>();
+      h.students.gate = gate;
+      unawaited(h.controller.load(profile: studentProfile()));
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('a failed load offers a retry', (tester) async {
+      final h = _Harness()..seedStudent();
+      h.attendance.failWith = RepositoryErrorKind.unavailable;
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(find.text('Something went wrong'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+    });
+
+    testWidgets('a denied load is unauthorized and offers no retry', (
+      tester,
+    ) async {
+      final h = _Harness()..seedStudent();
+      h.students.failWith = RepositoryErrorKind.permissionDenied;
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      expect(find.text('Access denied'), findsOneWidget);
+      // Retrying cannot grant permission, so no button is offered.
+      expect(find.text('Retry'), findsNothing);
+      expect(find.byType(StateMessage), findsOneWidget);
+    });
+
+    testWidgets('offers the student no way to write anything', (tester) async {
+      final h = _Harness()..seedStudent();
+      h.attendance.records.add(
+        attendance('a1', schoolId: 'sch1', status: 'Present', studentId: kUid),
+      );
+      h.fees.fees.add(
+        fee(
+          'f1',
+          schoolId: 'sch1',
+          totalDue: 1000,
+          paidAmount: 0,
+          status: 'Outstanding',
+          studentId: kUid,
+        ),
+      );
+      h.exams.exams.add(exam('e1', schoolId: 'sch1', date: '2026-10-25'));
+
+      await h.controller.load(profile: studentProfile());
+      await pumpDashboard(tester, h.controller);
+
+      // Nothing to type into and nothing to submit. This is the approved
+      // read-only presentation; the rules enforce it independently.
+      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.byType(ElevatedButton), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
+      expect(find.byType(Checkbox), findsNothing);
+      expect(find.byType(Switch), findsNothing);
+      for (final label in const [
+        'Save',
+        'Edit',
+        'Update',
+        'Mark Attendance',
+        'Pay Now',
+        'Add Exam',
+      ]) {
+        expect(find.text(label), findsNothing, reason: '"$label" is a write');
+      }
     });
   });
 }

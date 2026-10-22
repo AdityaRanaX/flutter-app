@@ -4,8 +4,13 @@ import 'package:my_flutter_edulens/core/theme/app_theme.dart';
 import 'package:my_flutter_edulens/core/widgets/placeholder_destination.dart';
 import 'package:my_flutter_edulens/features/district/screens/district_shell.dart';
 import 'package:my_flutter_edulens/features/school_admin/screens/school_admin_shell.dart';
+import 'package:my_flutter_edulens/features/student/controllers/student_dashboard_controller.dart';
 import 'package:my_flutter_edulens/features/student/screens/student_shell.dart';
 import 'package:my_flutter_edulens/features/teacher/screens/teacher_shell.dart';
+import 'package:my_flutter_edulens/models/student_model.dart';
+import 'package:my_flutter_edulens/models/user_model.dart';
+
+import 'support/fake_repositories.dart';
 
 /// Wraps a role shell in a themed app so it can be pumped in a test.
 Widget wrapShell(Widget shell) {
@@ -115,13 +120,45 @@ void main() {
     });
 
     testWidgets('every Student tab can be opened', (tester) async {
-      await tester.pumpWidget(wrapShell(const StudentShell()));
+      // Home is a real dashboard now rather than a placeholder, so the
+      // shell is given a controller over fakes. Without one it would reach
+      // for Firebase, which is not available in a widget test.
+      final students = FakeStudentRepository()
+        ..students.add(
+          const StudentModel(
+            studentId: 'stu-1',
+            name: 'Asha Rao',
+            schoolId: 'sch1',
+            className: 'Class 10',
+            section: 'A',
+          ),
+        );
+      final controller = StudentDashboardController(
+        studentRepository: students,
+        attendanceRepository: FakeAttendanceRepository(),
+        feeRepository: FakeFeeRepository(),
+        examRepository: FakeExamRepository(),
+      );
+      await controller.load(
+        profile: const UserModel(
+          uid: 'stu-1',
+          name: 'Asha Rao',
+          email: 'asha@edulens.test',
+          role: 'student',
+          schoolId: 'sch1',
+        ),
+      );
 
-      expect(find.text('Student Home'), findsOneWidget);
+      await tester.pumpWidget(
+        wrapShell(StudentShell(dashboardController: controller)),
+      );
+      await tester.pump();
+
+      expect(find.text('Welcome back, Asha Rao'), findsOneWidget);
 
       await tester.tap(find.text('Exams'));
       await tester.pump();
-      expect(find.text('Student Home'), findsNothing);
+      expect(find.text('Welcome back, Asha Rao'), findsNothing);
 
       await tester.tap(find.text('Profile'));
       await tester.pump();

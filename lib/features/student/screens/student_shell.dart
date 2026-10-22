@@ -3,15 +3,23 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/app_screen_bar.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/placeholder_destination.dart';
+import '../../../repositories/attendance_repository.dart';
 import '../../../repositories/exam_repository.dart';
+import '../../../repositories/fee_repository.dart';
+import '../../../repositories/firestore_attendance_repository.dart';
 import '../../../repositories/firestore_exam_repository.dart';
+import '../../../repositories/firestore_fee_repository.dart';
 import '../../../repositories/firestore_school_repository.dart';
+import '../../../repositories/firestore_student_repository.dart';
 import '../../../repositories/firestore_user_repository.dart';
 import '../../../repositories/school_repository.dart';
+import '../../../repositories/student_repository.dart';
 import '../../../repositories/user_repository.dart';
 import '../../../services/user_bootstrap_service.dart';
 import '../../school_admin/controllers/school_exam_schedule_controller.dart';
 import '../../school_admin/screens/school_exam_schedule_screen.dart';
+import '../controllers/student_dashboard_controller.dart';
+import 'student_dashboard_screen.dart';
 
 /// The Student navigation container.
 class StudentShell extends StatefulWidget {
@@ -19,8 +27,12 @@ class StudentShell extends StatefulWidget {
   final ExamRepository? examRepository;
   final SchoolRepository? schoolRepository;
   final UserRepository? userRepository;
+  final StudentRepository? studentRepository;
+  final AttendanceRepository? attendanceRepository;
+  final FeeRepository? feeRepository;
   final UserBootstrapService? bootstrapService;
   final SchoolExamScheduleController? examScheduleController;
+  final StudentDashboardController? dashboardController;
 
   const StudentShell({
     super.key,
@@ -28,8 +40,12 @@ class StudentShell extends StatefulWidget {
     this.examRepository,
     this.schoolRepository,
     this.userRepository,
+    this.studentRepository,
+    this.attendanceRepository,
+    this.feeRepository,
     this.bootstrapService,
     this.examScheduleController,
+    this.dashboardController,
   });
 
   @override
@@ -40,26 +56,42 @@ class _StudentShellState extends State<StudentShell> {
   int _currentIndex = 0;
 
   late final SchoolExamScheduleController _examScheduleController;
+  late final StudentDashboardController _dashboardController;
 
   @override
   void initState() {
     super.initState();
     final userRepository = widget.userRepository ?? FirestoreUserRepository();
+    final bootstrapService =
+        widget.bootstrapService ??
+        UserBootstrapService(userRepository: userRepository);
+
+    _dashboardController =
+        widget.dashboardController ??
+        StudentDashboardController(
+          studentRepository:
+              widget.studentRepository ?? FirestoreStudentRepository(),
+          attendanceRepository:
+              widget.attendanceRepository ?? FirestoreAttendanceRepository(),
+          feeRepository: widget.feeRepository ?? FirestoreFeeRepository(),
+          examRepository: widget.examRepository ?? FirestoreExamRepository(),
+          bootstrapService: bootstrapService,
+        );
+
     _examScheduleController =
         widget.examScheduleController ??
         SchoolExamScheduleController(
           examRepository: widget.examRepository ?? FirestoreExamRepository(),
           schoolRepository:
               widget.schoolRepository ?? FirestoreSchoolRepository(),
-          bootstrapService:
-              widget.bootstrapService ??
-              UserBootstrapService(userRepository: userRepository),
+          bootstrapService: bootstrapService,
         );
   }
 
   @override
   void dispose() {
     _examScheduleController.dispose();
+    _dashboardController.dispose();
     super.dispose();
   }
 
@@ -84,10 +116,7 @@ class _StudentShellState extends State<StudentShell> {
   Widget _destination(int index) {
     switch (index) {
       case 0:
-        return const PlaceholderDestination(
-          title: 'Student Home',
-          icon: Icons.home_outlined,
-        );
+        return StudentDashboardScreen(controller: _dashboardController);
       case 1:
         return SchoolExamScheduleScreen(
           controller: _examScheduleController,
