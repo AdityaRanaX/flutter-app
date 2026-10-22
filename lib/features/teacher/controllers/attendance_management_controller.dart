@@ -20,8 +20,7 @@ class StudentAttendanceItem {
     required this.student,
     this.attendance,
     String? currentStatus,
-  }) : currentStatus =
-            currentStatus ?? (attendance?.status ?? 'Present');
+  }) : currentStatus = currentStatus ?? (attendance?.status ?? 'Present');
 }
 
 /// Data payload for the Attendance Management screen.
@@ -75,7 +74,8 @@ class AttendanceManagementController extends ChangeNotifier {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   String? _selectedDate;
-  String get selectedDate => _selectedDate ?? _formatDate(AppDate.today(clock()));
+  String get selectedDate =>
+      _selectedDate ?? _formatDate(AppDate.today(clock()));
 
   /// Loads daily classroom attendance for [schoolId] on [date].
   Future<void> loadAttendance({
@@ -113,7 +113,9 @@ class AttendanceManagementController extends ChangeNotifier {
       _selectedDate = date ?? _formatDate(AppDate.today(clock()));
       final targetDate = _selectedDate!;
 
-      final students = await studentRepository.getStudentsBySchool(targetSchoolId);
+      final students = await studentRepository.getStudentsBySchool(
+        targetSchoolId,
+      );
       final records = await attendanceRepository.getAttendanceBySchoolAndDate(
         schoolId: targetSchoolId,
         date: targetDate,
@@ -139,8 +141,9 @@ class AttendanceManagementController extends ChangeNotifier {
         return;
       }
 
-      final presentCount =
-          items.where((i) => i.currentStatus.toLowerCase() == 'present').length;
+      final presentCount = items
+          .where((i) => i.currentStatus.toLowerCase() == 'present')
+          .length;
       final absentCount = items.length - presentCount;
       final rate = records.isEmpty
           ? (items.isEmpty ? null : (presentCount / items.length * 100))
@@ -169,7 +172,9 @@ class AttendanceManagementController extends ChangeNotifier {
     final data = _state.data;
     if (data == null) return;
 
-    final normStatus = status.trim().toLowerCase() == 'absent' ? 'Absent' : 'Present';
+    final normStatus = status.trim().toLowerCase() == 'absent'
+        ? 'Absent'
+        : 'Present';
 
     for (final item in data.items) {
       if (item.student.studentId == studentId) {
@@ -186,7 +191,9 @@ class AttendanceManagementController extends ChangeNotifier {
     final data = _state.data;
     if (data == null) return;
 
-    final normStatus = status.trim().toLowerCase() == 'absent' ? 'Absent' : 'Present';
+    final normStatus = status.trim().toLowerCase() == 'absent'
+        ? 'Absent'
+        : 'Present';
 
     for (final item in data.items) {
       item.currentStatus = normStatus;
@@ -214,10 +221,9 @@ class AttendanceManagementController extends ChangeNotifier {
     try {
       final batchRecords = data.items.map((item) {
         final existingId = item.attendance?.attendanceId;
-        final attendanceId =
-            (existingId != null && existingId.isNotEmpty)
-                ? existingId
-                : 'att_${item.student.studentId}_$date';
+        final attendanceId = (existingId != null && existingId.isNotEmpty)
+            ? existingId
+            : 'att_${item.student.studentId}_$date';
 
         return AttendanceModel(
           attendanceId: attendanceId,

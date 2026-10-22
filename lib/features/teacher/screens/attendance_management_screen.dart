@@ -54,11 +54,13 @@ class _AttendanceManagementScreenState
     return items.where((item) {
       final matchesSearch =
           _searchQuery.isEmpty ||
-          item.student.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          item.student.name.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
           (item.student.rollNumber != null &&
-              item.student.rollNumber!
-                  .toLowerCase()
-                  .contains(_searchQuery.toLowerCase()));
+              item.student.rollNumber!.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ));
 
       final matchesClass =
           _selectedClassFilter == 'All' ||
@@ -105,7 +107,8 @@ class _AttendanceManagementScreenState
       builder: (context, _) {
         return ViewStateBuilder(
           state: widget.controller.state,
-          onRetry: () => widget.controller.loadAttendance(schoolId: widget.schoolId),
+          onRetry: () =>
+              widget.controller.loadAttendance(schoolId: widget.schoolId),
           emptyTitle: 'No Students Found',
           builder: (context, data) => _buildBody(context, data),
         );
@@ -184,10 +187,7 @@ class _AttendanceManagementScreenState
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Daily Register', style: AppTextStyles.sectionHeading),
-            StatusBadge(
-              label: 'Date: ${data.date}',
-              type: StatusType.info,
-            ),
+            StatusBadge(label: 'Date: ${data.date}', type: StatusType.info),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -223,21 +223,19 @@ class _AttendanceManagementScreenState
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children:
-                      allClasses.map((cls) {
-                        final isSelected = cls == _selectedClassFilter;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: AppSpacing.xs),
-                          child: ChoiceChip(
-                            label: Text(cls),
-                            selected: isSelected,
-                            onSelected:
-                                (selected) => setState(() {
-                                  if (selected) _selectedClassFilter = cls;
-                                }),
-                          ),
-                        );
-                      }).toList(),
+                  children: allClasses.map((cls) {
+                    final isSelected = cls == _selectedClassFilter;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.xs),
+                      child: ChoiceChip(
+                        label: Text(cls),
+                        selected: isSelected,
+                        onSelected: (selected) => setState(() {
+                          if (selected) _selectedClassFilter = cls;
+                        }),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ),
@@ -275,8 +273,8 @@ class _AttendanceManagementScreenState
     final student = item.student;
     final rollNoText =
         student.rollNumber != null && student.rollNumber!.isNotEmpty
-            ? 'Roll No: ${student.rollNumber}'
-            : 'No Roll No.';
+        ? 'Roll No: ${student.rollNumber}'
+        : 'No Roll No.';
 
     final isPresent = item.currentStatus.toLowerCase() == 'present';
 
