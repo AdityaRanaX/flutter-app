@@ -237,10 +237,15 @@ class AttendanceManagementController extends ChangeNotifier {
 
       await attendanceRepository.saveAttendanceBatch(batchRecords);
 
-      _saveSuccess = true;
       _isSaving = false;
 
       await loadAttendance(schoolId: schoolId, date: date);
+
+      // Recorded after the reload, because loadAttendance() clears the
+      // save flags. Setting it first meant the register reported success
+      // to nobody.
+      _saveSuccess = true;
+      notifyListeners();
       return true;
     } catch (e) {
       _isSaving = false;

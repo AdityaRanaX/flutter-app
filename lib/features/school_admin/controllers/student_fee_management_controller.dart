@@ -147,12 +147,16 @@ class StudentFeeManagementController extends ChangeNotifier {
 
       await feeRepository.updateFeeStatus(updatedFee);
 
-      _saveSuccess = true;
       _isSaving = false;
 
       // Reload data to reflect updated fee details across the list
       final currentSchoolId = _state.data?.schoolId ?? currentFee.schoolId;
       await load(schoolId: currentSchoolId);
+
+      // Recorded after the reload, because load() clears the save flags.
+      // Setting it first meant the screen was never told the save worked.
+      _saveSuccess = true;
+      notifyListeners();
       return true;
     } catch (e) {
       _isSaving = false;

@@ -109,7 +109,17 @@ class SchoolInfoController extends ChangeNotifier {
 
       await schoolRepository.saveSchool(updatedSchool);
 
-      _state = ViewState.ready(updatedSchool);
+      // Publish what the store now holds, not what was submitted to it.
+      // Echoing the submitted object would show an unconfirmed write as
+      // though it were stored data, and would hide any normalisation or
+      // concurrent change the store applied.
+      //
+      // A null here would mean the record vanished between the write and
+      // the read; the written object is kept so the screen stays usable
+      // rather than blanking after a save that reported success.
+      final storedSchool = await schoolRepository.getSchoolById(schoolId);
+
+      _state = ViewState.ready(storedSchool ?? updatedSchool);
       _saveSuccess = true;
       _isSaving = false;
       notifyListeners();
