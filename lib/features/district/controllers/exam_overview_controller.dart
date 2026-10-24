@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/exam_model.dart';
@@ -21,7 +22,7 @@ enum ExamFilter {
 /// Exams and schools are read once; switching between Upcoming and All
 /// filters what is already in memory rather than querying again, because
 /// the toggle changes the view and not the underlying data.
-class ExamOverviewController extends ChangeNotifier {
+class ExamOverviewController extends ChangeNotifier with SafeNotifier {
   final ExamRepository examRepository;
   final SchoolRepository schoolRepository;
 
@@ -61,7 +62,7 @@ class ExamOverviewController extends ChangeNotifier {
 
   Future<void> load() async {
     _state = const ViewState.loading();
-    notifyListeners();
+    safeNotify();
 
     try {
       final exams = await examRepository.getAllExams();
@@ -76,7 +77,7 @@ class ExamOverviewController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   void setFilter(ExamFilter value) {
@@ -86,7 +87,7 @@ class ExamOverviewController extends ChangeNotifier {
     // after a failure cannot turn an error into an empty list.
     if (_state.isReady || _state.status == ViewStatus.empty) {
       _state = _buildState();
-      notifyListeners();
+      safeNotify();
     }
   }
 

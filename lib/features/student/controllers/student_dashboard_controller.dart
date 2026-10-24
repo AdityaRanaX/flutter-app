@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/firestore_collections.dart';
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/exam_model.dart';
@@ -70,7 +71,7 @@ class StudentDashboardData {
 /// [ViewStatus.unauthorized] and never an empty list, because showing a
 /// denial as "no records" would state that the data does not exist when
 /// it does.
-class StudentDashboardController extends ChangeNotifier {
+class StudentDashboardController extends ChangeNotifier with SafeNotifier {
   final StudentRepository studentRepository;
   final AttendanceRepository attendanceRepository;
   final FeeRepository feeRepository;
@@ -97,7 +98,7 @@ class StudentDashboardController extends ChangeNotifier {
   /// user when [profile] is omitted.
   Future<void> load({UserModel? profile}) async {
     _state = const ViewState.loading();
-    notifyListeners();
+    safeNotify();
 
     try {
       final resolved = await _resolveProfile(profile);
@@ -117,7 +118,7 @@ class StudentDashboardController extends ChangeNotifier {
           'Your student record could not be found. Please ask your school '
           'administrator to check your account.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -141,7 +142,7 @@ class StudentDashboardController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   /// Resolves the signed-in student's profile, or sets a failure state and
@@ -154,7 +155,7 @@ class StudentDashboardController extends ChangeNotifier {
         _state = const ViewState.error(
           'User bootstrap service is not configured.',
         );
-        notifyListeners();
+        safeNotify();
         return null;
       }
 
@@ -164,7 +165,7 @@ class StudentDashboardController extends ChangeNotifier {
         _state = const ViewState.unauthorized(
           message: 'Unable to resolve your profile. Please sign in again.',
         );
-        notifyListeners();
+        safeNotify();
         return null;
       }
       profile = bootstrapState.userModel;
@@ -174,7 +175,7 @@ class StudentDashboardController extends ChangeNotifier {
       _state = const ViewState.unauthorized(
         message: 'This dashboard is only available to students.',
       );
-      notifyListeners();
+      safeNotify();
       return null;
     }
 
@@ -183,7 +184,7 @@ class StudentDashboardController extends ChangeNotifier {
         'Your account is missing an identifier, so your records cannot be '
         'looked up.',
       );
-      notifyListeners();
+      safeNotify();
       return null;
     }
 

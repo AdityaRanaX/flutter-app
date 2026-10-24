@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/attendance_model.dart';
@@ -45,7 +46,7 @@ class AttendanceManagementData {
 }
 
 /// Drives the daily classroom Attendance Management workflow for Teachers and Admins.
-class AttendanceManagementController extends ChangeNotifier {
+class AttendanceManagementController extends ChangeNotifier with SafeNotifier {
   final StudentRepository studentRepository;
   final AttendanceRepository attendanceRepository;
   final UserBootstrapService? bootstrapService;
@@ -86,7 +87,7 @@ class AttendanceManagementController extends ChangeNotifier {
     _state = const ViewState.loading();
     _saveError = null;
     _saveSuccess = false;
-    notifyListeners();
+    safeNotify();
 
     try {
       String? targetSchoolId = schoolId;
@@ -106,7 +107,7 @@ class AttendanceManagementController extends ChangeNotifier {
         _state = const ViewState.error(
           'No school is currently assigned to this account.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -137,7 +138,7 @@ class AttendanceManagementController extends ChangeNotifier {
         _state = ViewState.empty(
           message: 'No student records found for this school.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -164,7 +165,7 @@ class AttendanceManagementController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   /// Updates status for a single student item locally before batch save.
@@ -183,7 +184,7 @@ class AttendanceManagementController extends ChangeNotifier {
       }
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   /// Sets all students in current register to [status] ('Present' or 'Absent').
@@ -199,7 +200,7 @@ class AttendanceManagementController extends ChangeNotifier {
       item.currentStatus = normStatus;
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   /// Saves the complete class attendance register in an atomic batch write.
@@ -216,7 +217,7 @@ class AttendanceManagementController extends ChangeNotifier {
     _isSaving = true;
     _saveError = null;
     _saveSuccess = false;
-    notifyListeners();
+    safeNotify();
 
     try {
       final batchRecords = data.items.map((item) {
@@ -245,13 +246,13 @@ class AttendanceManagementController extends ChangeNotifier {
       // save flags. Setting it first meant the register reported success
       // to nobody.
       _saveSuccess = true;
-      notifyListeners();
+      safeNotify();
       return true;
     } catch (e) {
       _isSaving = false;
       final viewError = ViewState<AttendanceManagementData>.fromError(e);
       _saveError = viewError.message ?? 'Failed to save attendance register.';
-      notifyListeners();
+      safeNotify();
       return false;
     }
   }

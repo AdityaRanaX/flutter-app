@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../models/school_summary.dart';
 import 'district_data_loader.dart';
 
@@ -10,7 +11,7 @@ import 'district_data_loader.dart';
 /// Firestore on every keystroke — the district's school list is small and
 /// fully loaded, so a round trip per character would cost reads and add
 /// latency for nothing.
-class SchoolListController extends ChangeNotifier {
+class SchoolListController extends ChangeNotifier with SafeNotifier {
   final DistrictDataLoader loader;
 
   SchoolListController({required this.loader});
@@ -27,7 +28,7 @@ class SchoolListController extends ChangeNotifier {
 
   Future<void> load() async {
     _state = const ViewState.loading();
-    notifyListeners();
+    safeNotify();
 
     try {
       final data = await loader.load();
@@ -38,7 +39,7 @@ class SchoolListController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   void search(String value) {
@@ -48,7 +49,7 @@ class SchoolListController extends ChangeNotifier {
     // a failure must not turn an error into an empty list.
     if (_state.isReady || _state.status == ViewStatus.empty) {
       _state = _buildState();
-      notifyListeners();
+      safeNotify();
     }
   }
 

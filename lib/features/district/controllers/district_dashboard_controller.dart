@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/exam_model.dart';
@@ -15,7 +16,7 @@ import 'district_data_loader.dart';
 ///
 /// A plain [ChangeNotifier] is used on purpose — four cards and a list do
 /// not justify adding a state-management package.
-class DistrictDashboardController extends ChangeNotifier {
+class DistrictDashboardController extends ChangeNotifier with SafeNotifier {
   final DistrictDataLoader loader;
 
   /// How far ahead the "upcoming exams" card looks.
@@ -35,7 +36,7 @@ class DistrictDashboardController extends ChangeNotifier {
 
   Future<void> load() async {
     _state = const ViewState.loading();
-    notifyListeners();
+    safeNotify();
 
     try {
       final data = await loader.load();
@@ -51,7 +52,7 @@ class DistrictDashboardController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   // ------------------------------------------------------------ derived

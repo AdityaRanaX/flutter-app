@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/fee_model.dart';
 import '../../../models/student_model.dart';
@@ -35,7 +36,7 @@ class StudentFeeData {
 }
 
 /// Drives the Student/Fee Management screen for School Administrators.
-class StudentFeeManagementController extends ChangeNotifier {
+class StudentFeeManagementController extends ChangeNotifier with SafeNotifier {
   final StudentRepository studentRepository;
   final FeeRepository feeRepository;
   final UserBootstrapService? bootstrapService;
@@ -63,7 +64,7 @@ class StudentFeeManagementController extends ChangeNotifier {
     _state = const ViewState.loading();
     _saveError = null;
     _saveSuccess = false;
-    notifyListeners();
+    safeNotify();
 
     try {
       String? targetSchoolId = schoolId;
@@ -83,7 +84,7 @@ class StudentFeeManagementController extends ChangeNotifier {
         _state = const ViewState.error(
           'No school is currently assigned to this account.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -102,7 +103,7 @@ class StudentFeeManagementController extends ChangeNotifier {
         _state = ViewState.empty(
           message: 'No student records found for this school.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -119,7 +120,7 @@ class StudentFeeManagementController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   /// Updates a student's fee status, paid amount, and remarks note while
@@ -135,7 +136,7 @@ class StudentFeeManagementController extends ChangeNotifier {
     _isSaving = true;
     _saveError = null;
     _saveSuccess = false;
-    notifyListeners();
+    safeNotify();
 
     try {
       final updatedFee = currentFee.copyWith(
@@ -156,13 +157,13 @@ class StudentFeeManagementController extends ChangeNotifier {
       // Recorded after the reload, because load() clears the save flags.
       // Setting it first meant the screen was never told the save worked.
       _saveSuccess = true;
-      notifyListeners();
+      safeNotify();
       return true;
     } catch (e) {
       _isSaving = false;
       final viewError = ViewState<StudentFeeData>.fromError(e);
       _saveError = viewError.message ?? 'Failed to update fee status.';
-      notifyListeners();
+      safeNotify();
       return false;
     }
   }
@@ -170,6 +171,6 @@ class StudentFeeManagementController extends ChangeNotifier {
   void resetSaveStatus() {
     _saveSuccess = false;
     _saveError = null;
-    notifyListeners();
+    safeNotify();
   }
 }

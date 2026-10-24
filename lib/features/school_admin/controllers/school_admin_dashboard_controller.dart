@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/firestore_collections.dart';
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/exam_model.dart';
@@ -45,7 +46,7 @@ class SchoolAdminDashboardData {
 /// Resolves the authenticated school administrator's assigned school,
 /// fetches school-scoped metrics through repositories, and exposes
 /// [ViewState] for the UI layer.
-class SchoolAdminDashboardController extends ChangeNotifier {
+class SchoolAdminDashboardController extends ChangeNotifier with SafeNotifier {
   final SchoolRepository schoolRepository;
   final StudentRepository studentRepository;
   final UserRepository userRepository;
@@ -76,7 +77,7 @@ class SchoolAdminDashboardController extends ChangeNotifier {
   /// authenticated school administrator profile.
   Future<void> load({String? schoolId, UserModel? profile}) async {
     _state = const ViewState.loading();
-    notifyListeners();
+    safeNotify();
 
     try {
       UserModel? adminProfile = profile;
@@ -88,7 +89,7 @@ class SchoolAdminDashboardController extends ChangeNotifier {
           _state = const ViewState.error(
             'User bootstrap service is not configured.',
           );
-          notifyListeners();
+          safeNotify();
           return;
         }
 
@@ -98,7 +99,7 @@ class SchoolAdminDashboardController extends ChangeNotifier {
           _state = const ViewState.unauthorized(
             message: 'Unable to resolve user profile.',
           );
-          notifyListeners();
+          safeNotify();
           return;
         }
 
@@ -110,14 +111,14 @@ class SchoolAdminDashboardController extends ChangeNotifier {
         _state = const ViewState.error(
           'No school is currently assigned to this account.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
       final school = await schoolRepository.getSchoolById(targetSchoolId);
       if (school == null) {
         _state = const ViewState.error('Assigned school could not be found.');
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -165,6 +166,6 @@ class SchoolAdminDashboardController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 }

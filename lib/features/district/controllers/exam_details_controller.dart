@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../models/exam_model.dart';
 import '../../../models/student_model.dart';
 import '../../../repositories/exam_repository.dart';
@@ -35,7 +36,7 @@ class ExamDetails {
 /// The exam is fetched by its id. A subject is not an identifier: several
 /// schools and classes can hold a Mathematics exam, and the screen must
 /// show the one that was tapped.
-class ExamDetailsController extends ChangeNotifier {
+class ExamDetailsController extends ChangeNotifier with SafeNotifier {
   final ExamRepository examRepository;
   final SchoolRepository schoolRepository;
   final StudentRepository studentRepository;
@@ -64,7 +65,7 @@ class ExamDetailsController extends ChangeNotifier {
   Future<void> load(String examId) async {
     _state = const ViewState.loading();
     _query = '';
-    notifyListeners();
+    safeNotify();
 
     try {
       final exam = await examRepository.getExamById(examId);
@@ -72,7 +73,7 @@ class ExamDetailsController extends ChangeNotifier {
         // Not-found, not empty. An empty state would suggest the exam
         // exists but has nothing in it, which is a different claim.
         _state = const ViewState.error('This exam could not be found.');
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -100,12 +101,12 @@ class ExamDetailsController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   void search(String value) {
     if (value == _query) return;
     _query = value;
-    notifyListeners();
+    safeNotify();
   }
 }

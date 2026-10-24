@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/exam_model.dart';
@@ -37,7 +38,7 @@ class SchoolDetails {
 /// The school is loaded by its id, never by name or list position: two
 /// schools can share a name, and a position means nothing once the list
 /// has been searched or sorted.
-class SchoolDetailsController extends ChangeNotifier {
+class SchoolDetailsController extends ChangeNotifier with SafeNotifier {
   final SchoolRepository schoolRepository;
   final StudentRepository studentRepository;
   final AttendanceRepository attendanceRepository;
@@ -59,7 +60,7 @@ class SchoolDetailsController extends ChangeNotifier {
 
   Future<void> load(String schoolId) async {
     _state = const ViewState.loading();
-    notifyListeners();
+    safeNotify();
 
     try {
       final school = await schoolRepository.getSchoolById(schoolId);
@@ -68,7 +69,7 @@ class SchoolDetailsController extends ChangeNotifier {
         // deliberately not reported as an empty list, which would imply
         // the school exists but holds no data.
         _state = const ViewState.error('This school could not be found.');
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -97,6 +98,6 @@ class SchoolDetailsController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 }

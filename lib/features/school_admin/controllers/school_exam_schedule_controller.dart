@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/metrics.dart';
 import '../../../models/exam_model.dart';
@@ -12,7 +13,7 @@ import '../../../services/user_bootstrap_service.dart';
 import '../../district/controllers/exam_overview_controller.dart';
 
 /// Drives the School Exam Schedule view for School Admins, Teachers, and Students.
-class SchoolExamScheduleController extends ChangeNotifier {
+class SchoolExamScheduleController extends ChangeNotifier with SafeNotifier {
   final ExamRepository examRepository;
   final SchoolRepository schoolRepository;
   final UserBootstrapService? bootstrapService;
@@ -49,7 +50,7 @@ class SchoolExamScheduleController extends ChangeNotifier {
   Future<void> load({String? schoolId, UserModel? profile}) async {
     _state = const ViewState.loading();
     _saveError = null;
-    notifyListeners();
+    safeNotify();
 
     try {
       String? schoolIdToLoad = schoolId;
@@ -69,7 +70,7 @@ class SchoolExamScheduleController extends ChangeNotifier {
         _state = const ViewState.error(
           'No school is currently assigned to this account.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -84,7 +85,7 @@ class SchoolExamScheduleController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   void setFilter(ExamFilter value) {
@@ -92,7 +93,7 @@ class SchoolExamScheduleController extends ChangeNotifier {
     _filter = value;
     if (_state.isReady || _state.status == ViewStatus.empty) {
       _state = _buildState();
-      notifyListeners();
+      safeNotify();
     }
   }
 
@@ -126,7 +127,7 @@ class SchoolExamScheduleController extends ChangeNotifier {
 
     _isSaving = true;
     _saveError = null;
-    notifyListeners();
+    safeNotify();
 
     try {
       final newExam = ExamModel(
@@ -149,7 +150,7 @@ class SchoolExamScheduleController extends ChangeNotifier {
       _isSaving = false;
       final viewError = ViewState<List<ExamModel>>.fromError(e);
       _saveError = viewError.message ?? 'Failed to schedule exam.';
-      notifyListeners();
+      safeNotify();
       return false;
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/state/view_state.dart';
+import '../../../core/state/safe_notifier.dart';
 import '../../../models/school_model.dart';
 import '../../../models/user_model.dart';
 import '../../../repositories/school_repository.dart';
@@ -10,7 +11,7 @@ import '../../../services/user_bootstrap_service.dart';
 ///
 /// Manages loading school details, editing contact and location metadata
 /// (`address`, `contactNumber`, `email`), and persisting updates via [SchoolRepository].
-class SchoolInfoController extends ChangeNotifier {
+class SchoolInfoController extends ChangeNotifier with SafeNotifier {
   final SchoolRepository schoolRepository;
   final UserBootstrapService? bootstrapService;
 
@@ -34,7 +35,7 @@ class SchoolInfoController extends ChangeNotifier {
     _state = const ViewState.loading();
     _saveError = null;
     _saveSuccess = false;
-    notifyListeners();
+    safeNotify();
 
     try {
       String? targetSchoolId = schoolId;
@@ -55,14 +56,14 @@ class SchoolInfoController extends ChangeNotifier {
         _state = const ViewState.error(
           'No school is currently assigned to this account.',
         );
-        notifyListeners();
+        safeNotify();
         return;
       }
 
       final school = await schoolRepository.getSchoolById(targetSchoolId);
       if (school == null) {
         _state = const ViewState.error('Assigned school could not be found.');
-        notifyListeners();
+        safeNotify();
         return;
       }
 
@@ -71,7 +72,7 @@ class SchoolInfoController extends ChangeNotifier {
       _state = ViewState.fromError(e);
     }
 
-    notifyListeners();
+    safeNotify();
   }
 
   /// Persists updated school information while preserving required fields ([schoolId], [schoolName], [location]).
@@ -86,7 +87,7 @@ class SchoolInfoController extends ChangeNotifier {
     _isSaving = true;
     _saveError = null;
     _saveSuccess = false;
-    notifyListeners();
+    safeNotify();
 
     try {
       final currentSchool =
@@ -94,7 +95,7 @@ class SchoolInfoController extends ChangeNotifier {
       if (currentSchool == null) {
         _saveError = 'Cannot save: school record not found.';
         _isSaving = false;
-        notifyListeners();
+        safeNotify();
         return false;
       }
 
@@ -122,13 +123,13 @@ class SchoolInfoController extends ChangeNotifier {
       _state = ViewState.ready(storedSchool ?? updatedSchool);
       _saveSuccess = true;
       _isSaving = false;
-      notifyListeners();
+      safeNotify();
       return true;
     } catch (e) {
       _isSaving = false;
       final viewError = ViewState<SchoolModel>.fromError(e);
       _saveError = viewError.message ?? 'Failed to save school details.';
-      notifyListeners();
+      safeNotify();
       return false;
     }
   }
@@ -136,6 +137,6 @@ class SchoolInfoController extends ChangeNotifier {
   void resetSaveStatus() {
     _saveSuccess = false;
     _saveError = null;
-    notifyListeners();
+    safeNotify();
   }
 }
