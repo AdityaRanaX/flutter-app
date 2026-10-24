@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Firestore Security Rules runtime tests for EduLens, run against the Firebase Emulator Suite.",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project edulens-rules-test \"node --test rules.test.mjs\""
+    "test": "firebase emulators:exec --only firestore --project edulens-rules-test \"node --test rules.test.mjs\"",
+    "freshness": "firebase emulators:exec --only firestore --project edulens-freshness \"node freshness.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "4.0.1",
