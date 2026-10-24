@@ -233,35 +233,75 @@ denial as its unauthorized state.
 
 ### Requirement verification
 
-Checked by inspecting the deployed rules. **No rule was changed**: every
-Day 11 authorization requirement is already satisfied.
+Originally checked by inspecting the rules source during Day 11, and
+**re-checked at runtime during Day 12** against the Firebase Emulator
+Suite (`test/rules/`). The runtime run corrected the Day 11 result.
 
-| # | Requirement | Enforced by | Status |
+| # | Requirement | Status | Verified by |
 |---|---|---|---|
-| 1 | Only authenticated users reach student data | `isSignedIn()` guards every collection | Satisfied |
-| 2 | A student reads only their own attendance / fees | `resource.data.studentId == request.auth.uid` | Satisfied |
-| 2a | A student reads their own examination schedule | `getUserSchoolId() == resource.data.schoolId` | Satisfied, requires `users.schoolId` |
-| 3 | A student cannot write attendance | create/update limited to district, school admin, teacher | Satisfied |
-| 4 | A student cannot change fee amounts or status | create/update limited to district, school admin | Satisfied |
-| 5 | A student cannot write examinations | create/update limited to district, school admin, teacher | Satisfied |
-| 6 | Staff keep their existing access | rules untouched by Day 11 | Satisfied |
-| 7 | Substituting another id grants nothing | reads match on stored `resource.data`, never on client input | Satisfied |
+| 1 | Only authenticated users reach student data | Satisfied | Runtime |
+| 2 | A student reads only their own attendance / fees | **Was wrong on Day 11. Now satisfied after a Day 12 rule fix.** | Runtime |
+| 2a | A student reads their own examination schedule | Satisfied, requires `users.schoolId` | Runtime |
+| 3 | A student cannot write attendance | Satisfied | Runtime |
+| 4 | A student cannot change fee amounts or status | Satisfied | Runtime |
+| 5 | A student cannot write examinations | Satisfied | Runtime |
+| 6 | Staff keep their existing access | Satisfied | Runtime |
+| 7 | Substituting another id grants nothing | Satisfied | Runtime |
 
-Requirement 7 holds because every student read compares `request.auth.uid`
-against the **stored** document rather than against anything the client
-sends. Asking for another student's document returns a denial, not that
-student's record.
+### Correction to the Day 11 result for requirement 2
 
-### Verification limits
+Day 11 recorded requirement 2 as satisfied on the strength of this clause
+on `students`, `attendance` and `fees`:
 
-The table above is **static inspection of the rules source**. The
-Firebase Emulator Suite is not configured in this repository, and no
-rules test harness exists, so:
+```
+(isStudent() && resource.data.studentId == request.auth.uid)
+```
 
-> **Runtime Firestore Security Rules authorization remains unverified.**
+That reading was incomplete. The clause **above** it granted access
+first:
 
-Widget and controller tests in `test/` run against the in-memory fakes in
-`test/support/fake_repositories.dart`. They verify how the dashboard
-*responds* to a permission denial. They execute no rules and prove
-nothing about whether Firestore would actually deny the request. Rules
-were not deployed as part of this work.
+```
+getUserSchoolId() == resource.data.schoolId
+```
+
+`getUserSchoolId()` reads `users/{uid}.schoolId` for any signed-in user,
+students included. So a provisioned student matched the school-wide
+clause before the own-record clause was ever evaluated, and could read
+every classmate's attendance record, fee amounts and student document —
+and could list those collections for the whole school. The own-record
+clause was unreachable for them.
+
+Four emulator tests failed on first run and proved it. The fix restricts
+that clause to staff:
+
+```
+(!isStudent() && getUserSchoolId() == resource.data.schoolId)
+```
+
+Students now fall through to the own-record clause. District Admin,
+School Admin and Teacher access is unchanged, which the same suite
+confirms. `exams` deliberately keeps the school-wide clause, because a
+student is meant to see their school's examination schedule.
+
+The lesson recorded for later days: a permissive clause earlier in an
+`||` chain makes every clause after it unreachable. Reading a rule file
+is not verification; running requests against the rules engine is.
+
+### Verification status
+
+Runtime Firestore Security Rules authorization is **verified** for the
+cases in `test/rules/rules.test.mjs`: 23 of 23 passing against the
+Firebase Emulator Suite. See `docs/DAY12_INTEGRATION_REPORT.md` for the
+case list and how to run it.
+
+Two limits still apply:
+
+- The suite covers the cases listed in it, not the whole rules file.
+  Collections and operations it does not exercise remain unverified.
+- Dart tests in `test/` use the in-memory fakes in
+  `test/support/fake_repositories.dart`. They show how a screen responds
+  to a denial and execute no rules at all.
+
+**The corrected rules have not been deployed.** The live project is still
+running the version with the school-wide read clause, so the gap is open
+in production until someone deploys.

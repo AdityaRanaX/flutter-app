@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Firestore Security Rules test harness (test/rules)
+node_modules/
+test/rules/package-lock.json
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

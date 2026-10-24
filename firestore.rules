@@ -130,7 +130,9 @@ service cloud.firestore {
     match /students/{studentId} {
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
-        getUserSchoolId() == resource.data.schoolId ||
+        // Staff only. Including students here would let any provisioned
+        // student read every classmate's record in their school.
+        (!isStudent() && getUserSchoolId() == resource.data.schoolId) ||
         (isStudent() && (resource.data.studentId == request.auth.uid || studentId == request.auth.uid))
       );
 
@@ -170,7 +172,9 @@ service cloud.firestore {
 
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
-        getUserSchoolId() == resource.data.schoolId ||
+        // Staff only; a student reads their own records through the
+        // clause below and must not see the rest of the school's.
+        (!isStudent() && getUserSchoolId() == resource.data.schoolId) ||
         (isStudent() && resource.data.studentId == request.auth.uid)
       );
 
@@ -208,7 +212,9 @@ service cloud.firestore {
     match /fees/{feeId} {
       allow read: if isSignedIn() && (
         isDistrictAdmin() ||
-        getUserSchoolId() == resource.data.schoolId ||
+        // Staff only. Fee amounts are among the most sensitive records a
+        // student could see about a classmate.
+        (!isStudent() && getUserSchoolId() == resource.data.schoolId) ||
         (isStudent() && resource.data.studentId == request.auth.uid)
       );
 
